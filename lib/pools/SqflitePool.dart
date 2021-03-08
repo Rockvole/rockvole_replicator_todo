@@ -27,7 +27,7 @@ class SqflitePool extends AbstractPool {
     return getDBType().toString() + ":" + directory.toString() + "/" + dataBaseName.toString();
   }
 
-  DBType getDBType() => DBType.Sqlite;
+  DBType getDBType() => DBType.Sqflite;
 
   Future<AbstractDatabase> getConnection() async {
     AbstractDatabase db = SqfliteDatabase.filename(dataBaseName!);

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:rockvole_replicator_todo/helpers/SqfliteHelper.dart';
 import 'package:yaml/yaml.dart';
 
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
 import 'package:rockvole_db/rockvole_db.dart';
 import 'package:rockvole_db/rockvole_transactions.dart';
@@ -38,25 +39,25 @@ class _MyHomePageState extends State<MyHomePage> {
   late SchemaMetaData smd;
   late SchemaMetaData smdSys;
 
-  void getYaml() {
-    File file = File('ancillary/todo_schema.yaml');
-    String yamlString = file.readAsStringSync();
+  Future<void> getYaml() async {
+    String yamlString = await rootBundle.loadString('ancillary/assets/todo_schema.yaml');
     YamlMap yaml = loadYaml(yamlString);
     smd = SchemaMetaData.yaml(yaml);
     smd = SchemaMetaDataTools.createSchemaMetaData(smd);
     SchemaMetaData smdSys = TransactionTools.createHcSchemaMetaData(smd);
   }
 
-  void setupDb() async {
-    getYaml();
+  Future<void> setupDb() async {
+    await getYaml();
     ConfigurationNameDefaults defaults = ConfigurationNameDefaults();
 
     var databasesPath = (await getDatabasesPath()).toString()+"/task_data.db";
     AbstractDatabase db=SqfliteDatabase.filename(databasesPath);
     await db.connect();
-    DbTransaction transaction = await SqfliteHelper.getSqfliteDbTransaction('task_data.db', (await getDatabasesPath()).toString());
+    DbTransaction transaction = await SqfliteHelper.getSqfliteDbTransaction('task_data', (await getDatabasesPath()).toString());
 
     TaskDao taskDao = TaskDao(smd, transaction);
+    await taskDao.init();
     await taskDao.createTable();
     await db.close();
   }
