@@ -40,7 +40,8 @@ class _MyHomePageState extends State<MyHomePage> {
   late SchemaMetaData smdSys;
 
   Future<void> getYaml() async {
-    String yamlString = await rootBundle.loadString('ancillary/assets/todo_schema.yaml');
+    String yamlString =
+        await rootBundle.loadString('ancillary/assets/todo_schema.yaml');
     YamlMap yaml = loadYaml(yamlString);
     smd = SchemaMetaData.yaml(yaml);
     smd = SchemaMetaDataTools.createSchemaMetaData(smd);
@@ -51,10 +52,11 @@ class _MyHomePageState extends State<MyHomePage> {
     await getYaml();
     ConfigurationNameDefaults defaults = ConfigurationNameDefaults();
 
-    var databasesPath = (await getDatabasesPath()).toString()+"/task_data.db";
-    AbstractDatabase db=SqfliteDatabase.filename(databasesPath);
+    var databasesPath = (await getDatabasesPath()).toString() + "/task_data.db";
+    AbstractDatabase db = SqfliteDatabase.filename(databasesPath);
     await db.connect();
-    DbTransaction transaction = await SqfliteHelper.getSqfliteDbTransaction('task_data', (await getDatabasesPath()).toString());
+    DbTransaction transaction = await SqfliteHelper.getSqfliteDbTransaction(
+        'task_data', (await getDatabasesPath()).toString());
 
     TaskDao taskDao = TaskDao(smd, transaction);
     await taskDao.init();
@@ -70,6 +72,27 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    String? _chosenValue = "IOS";
+    List<String> nameList = [
+      'Android',
+      'IOS',
+      'Flutter',
+      'Node',
+      'Java',
+      'Python',
+      'PHP'
+    ];
+    List<DropdownMenuItem<String>> menuItemList =
+        nameList.map<DropdownMenuItem<String>>((String value) {
+      return DropdownMenuItem<String>(
+        value: value,
+        child: Text(
+          value,
+          style: TextStyle(color: Colors.black),
+        ),
+      );
+    }).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -78,11 +101,29 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'Welcome',
+            DropdownButton<String>(
+              focusColor: Colors.white,
+              value: _chosenValue,
+              //elevation: 5,
+              style: TextStyle(color: Colors.white),
+              iconEnabledColor: Colors.black,
+              items: menuItemList,
+              hint: Text(
+                "Please choose a language",
+                style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500),
+              ),
+              onChanged: (String? value) {
+                setState(() {
+                  _chosenValue = value;
+                });
+              },
             ),
-            Text('Hello',
-              style: Theme.of(context).textTheme.display1,
+            Text(
+              'Hello',
+              style: Theme.of(context).textTheme.headline4,
             ),
           ],
         ),
