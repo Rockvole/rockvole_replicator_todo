@@ -72,27 +72,26 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    String? _chosenValue = "IOS";
-    List<String> nameList = [
-      'Android',
-      'IOS',
-      'Flutter',
-      'Node',
-      'Java',
-      'Python',
-      'PHP'
-    ];
-    List<DropdownMenuItem<String>> menuItemList =
-        nameList.map<DropdownMenuItem<String>>((String value) {
-      return DropdownMenuItem<String>(
-        value: value,
+    int? _chosenValue = 2;
+    Map<int, String> nameMap = {
+      1: 'Android',
+      2: 'IOS',
+      3: 'Flutter',
+      4: 'Node',
+      5: 'Java',
+      6: 'Python',
+      7: 'PHP'
+    };
+    List<DropdownMenuItem<int>> menuItemList = [];
+    nameMap.forEach((key, value) {
+      menuItemList.add(DropdownMenuItem<int>(
+        value: key,
         child: Text(
           value,
           style: TextStyle(color: Colors.black),
         ),
-      );
-    }).toList();
-
+      ));
+    });
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -101,7 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            DropdownButton<String>(
+            DropdownButton<int>(
               focusColor: Colors.white,
               value: _chosenValue,
               //elevation: 5,
@@ -115,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     fontSize: 14,
                     fontWeight: FontWeight.w500),
               ),
-              onChanged: (String? value) {
+              onChanged: (int? value) {
                 setState(() {
                   _chosenValue = value;
                 });
