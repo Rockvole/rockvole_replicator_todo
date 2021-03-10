@@ -82,8 +82,10 @@ class _MyHomePageState extends State<MyHomePage> {
       6: 'Python',
       7: 'PHP'
     };
+    List<Widget> nameList = [];
     List<DropdownMenuItem<int>> menuItemList = [];
     nameMap.forEach((key, value) {
+      nameList.add(Text(value, style: TextStyle(color: Colors.black)));
       menuItemList.add(DropdownMenuItem<int>(
         value: key,
         child: Text(
@@ -107,6 +109,9 @@ class _MyHomePageState extends State<MyHomePage> {
               style: TextStyle(color: Colors.white),
               iconEnabledColor: Colors.black,
               items: menuItemList,
+              selectedItemBuilder: (BuildContext context) {
+                return nameList;
+              },
               hint: Text(
                 "Please choose a language",
                 style: TextStyle(
