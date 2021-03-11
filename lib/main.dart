@@ -48,6 +48,7 @@ class _MyHomePageState extends State<MyHomePage> {
   };
   late SchemaMetaData smd;
   late SchemaMetaData smdSys;
+  late TaskDao _taskDao;
 
   Future<void> getYaml() async {
     String yamlString =
@@ -68,10 +69,15 @@ class _MyHomePageState extends State<MyHomePage> {
     DbTransaction transaction = await SqfliteHelper.getSqfliteDbTransaction(
         'task_data', (await getDatabasesPath()).toString());
 
-    TaskDao taskDao = TaskDao(smd, transaction);
-    await taskDao.init(initTable: false);
-    if(!(await taskDao.doesTableExist())) await taskDao.createTable();
-    await db.close();
+    _taskDao = TaskDao(smd, transaction);
+    await _taskDao.init(initTable: false);
+    if(!(await _taskDao.doesTableExist())) await _taskDao.createTable();
+    //await db.close();
+  }
+
+  Future<void> addTask(int id, String task_description, bool task_complete) async {
+    TaskDto taskDto=TaskDto.wee(id,task_description,task_complete);
+    await _taskDao.insertDto(taskDto);
   }
 
   @override
@@ -84,6 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void setState(VoidCallback fn) {
     super.setState(fn);
     print("chosen="+_nameMap[_chosenValue].toString());
+    addTask(_chosenValue!,_nameMap[_chosenValue]!,false);
   }
 
   @override
