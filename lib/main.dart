@@ -36,6 +36,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  int? _chosenValue = 2;
   late SchemaMetaData smd;
   late SchemaMetaData smdSys;
 
@@ -72,7 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    int? _chosenValue = 2;
+
     Map<int, String> nameMap = {
       1: 'Android',
       2: 'IOS',
@@ -103,15 +104,15 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             DropdownButton<int>(
-              focusColor: Colors.white,
+              //focusColor: Colors.white,
               value: _chosenValue,
               //elevation: 5,
-              style: TextStyle(color: Colors.white),
+              style: TextStyle(color: Colors.blue, fontSize: 18),
               iconEnabledColor: Colors.black,
               items: menuItemList,
-              selectedItemBuilder: (BuildContext context) {
-                return nameList;
-              },
+              //selectedItemBuilder: (BuildContext context) {
+              //  return nameList;
+              //},
               hint: Text(
                 "Please choose a language",
                 style: TextStyle(
