@@ -37,6 +37,15 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int? _chosenValue = 2;
+  Map<int, String> _nameMap = {
+    1: 'Android',
+    2: 'IOS',
+    3: 'Flutter',
+    4: 'Node',
+    5: 'Java',
+    6: 'Python',
+    7: 'PHP'
+  };
   late SchemaMetaData smd;
   late SchemaMetaData smdSys;
 
@@ -60,8 +69,8 @@ class _MyHomePageState extends State<MyHomePage> {
         'task_data', (await getDatabasesPath()).toString());
 
     TaskDao taskDao = TaskDao(smd, transaction);
-    await taskDao.init();
-    await taskDao.createTable();
+    await taskDao.init(initTable: false);
+    if(!(await taskDao.doesTableExist())) await taskDao.createTable();
     await db.close();
   }
 
@@ -72,20 +81,17 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    print("chosen="+_nameMap[_chosenValue].toString());
+  }
+
+  @override
   Widget build(BuildContext context) {
 
-    Map<int, String> nameMap = {
-      1: 'Android',
-      2: 'IOS',
-      3: 'Flutter',
-      4: 'Node',
-      5: 'Java',
-      6: 'Python',
-      7: 'PHP'
-    };
     List<Widget> nameList = [];
     List<DropdownMenuItem<int>> menuItemList = [];
-    nameMap.forEach((key, value) {
+    _nameMap.forEach((key, value) {
       nameList.add(Text(value, style: TextStyle(color: Colors.black)));
       menuItemList.add(DropdownMenuItem<int>(
         value: key,
