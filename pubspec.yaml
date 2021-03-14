@@ -24,9 +24,9 @@ dependencies:
   flutter:
     sdk: flutter
   sqflite: ^2.0.0+1
+  yaml: ^3.0.0
   rockvole_db:
     path: ../../dart/rockvole_db
-  yaml: ^3.0.0
 
 
 

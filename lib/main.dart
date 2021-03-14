@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:rockvole_replicator_todo/helpers/SqfliteHelper.dart';
 import 'package:yaml/yaml.dart';
 
@@ -71,12 +70,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
     _taskDao = TaskDao(smd, transaction);
     await _taskDao.init(initTable: false);
-    if(!(await _taskDao.doesTableExist())) await _taskDao.createTable();
+    if (!(await _taskDao.doesTableExist())) await _taskDao.createTable();
     //await db.close();
   }
 
-  Future<void> addTask(int id, String task_description, bool task_complete) async {
-    TaskDto taskDto=TaskDto.wee(id,task_description,task_complete);
+  Future<void> addTask(
+      int id, String task_description, bool task_complete) async {
+    TaskDto taskDto = TaskDto.wee(id, task_description, task_complete);
     await _taskDao.insertDto(taskDto);
   }
 
@@ -89,13 +89,30 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void setState(VoidCallback fn) {
     super.setState(fn);
-    print("chosen="+_nameMap[_chosenValue].toString());
-    addTask(_chosenValue!,_nameMap[_chosenValue]!,false);
+    print("chosen=" + _nameMap[_chosenValue].toString());
+    addTask(_chosenValue!, _nameMap[_chosenValue]!, false);
   }
 
   @override
   Widget build(BuildContext context) {
-
+    const List<String> kOptions = <String>[
+      'A',
+      'An',
+      'And',
+      'Ant',
+      'Ball',
+      'Basket',
+      'Bounce',
+      'Bakery',
+      'Zoo',
+      'Zebra',
+      'Joo',
+      'June',
+      'King',
+      'Kite',
+      'Kama',
+    ];
+    String _autocompleteSelection;
     List<Widget> nameList = [];
     List<DropdownMenuItem<int>> menuItemList = [];
     _nameMap.forEach((key, value) {
@@ -114,7 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Center(
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             DropdownButton<int>(
               //focusColor: Colors.white,
@@ -139,10 +156,72 @@ class _MyHomePageState extends State<MyHomePage> {
                 });
               },
             ),
-            Text(
-              'Hello',
-              style: Theme.of(context).textTheme.headline4,
-            ),
+            RawAutocomplete(
+                optionsBuilder: (TextEditingValue textEditingValue) {
+              return kOptions.where((String option) {
+                return option
+                    .toLowerCase()
+                    .contains(textEditingValue.text.toLowerCase());
+              });
+            }, onSelected: (String selection) {
+              setState(() {
+                _autocompleteSelection = selection;
+              });
+            }, fieldViewBuilder: (BuildContext context,
+                    TextEditingController textEditingController,
+                    FocusNode focusNode,
+                    VoidCallback onFieldSubmitted) {
+              return TextFormField(
+                controller: textEditingController,
+                decoration: InputDecoration(
+                  hintText: 'This is an RawAutocomplete 2.0',
+                ),
+                focusNode: focusNode,
+                onFieldSubmitted: (String value) {
+                  onFieldSubmitted();
+                },
+                validator: (String? value) {
+                  if (!kOptions.contains(value)) {
+                    return 'Nothing selected.';
+                  }
+                  return null;
+                },
+              );
+            }, optionsViewBuilder: (BuildContext context,
+                    AutocompleteOnSelected<String> onSelected,
+                    Iterable<String> options) {
+              final RenderBox renderBox =
+                  context.findRenderObject() as RenderBox;
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4.0,
+                  child: SizedBox(
+                    height: 300.0,
+                    child: ListView(
+                      children: options
+                          .map((String option) => GestureDetector(
+                                onTap: () {
+                                  onSelected(option);
+                                },
+                                child: ListTile(
+                                  title: Card(
+                                      child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      option,
+                                      style: TextStyle(
+                                          fontSize: 18, color: Colors.pink),
+                                    ),
+                                  )),
+                                ),
+                              ))
+                          .toList(),
+                    ),
+                  ),
+                ),
+              );
+            })
           ],
         ),
       ),
