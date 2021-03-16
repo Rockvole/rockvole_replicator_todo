@@ -36,6 +36,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  String? _autoCompleteValue;
   List<String> _kOptions = [];
   late List<TaskDto> _taskList;
   int? _chosenValue = 2;
@@ -84,10 +85,15 @@ class _MyHomePageState extends State<MyHomePage> {
     //await db.close();
   }
 
-  Future<void> addTask(
+  Future<void> insertTask(
       int id, String task_description, bool task_complete) async {
     TaskDto taskDto = TaskDto.wee(id, task_description, task_complete);
-    await _taskDao.insertDto(taskDto);
+    await _taskDao.insertTaskDto(taskDto);
+  }
+
+  Future<void> addTask(String task_description, bool task_complete) async {
+    TaskDto taskDto = TaskDto.wee(null, task_description, task_complete);
+    await _taskDao.addTaskDto(taskDto, WardenType.USER);
   }
 
   @override
@@ -100,12 +106,12 @@ class _MyHomePageState extends State<MyHomePage> {
   void setState(VoidCallback fn) {
     super.setState(fn);
     print("chosen=" + _nameMap[_chosenValue].toString());
-    addTask(_chosenValue!, _nameMap[_chosenValue]!, false);
+    insertTask(_chosenValue!, _nameMap[_chosenValue]!, false);
   }
 
   @override
   Widget build(BuildContext context) {
-    String _autocompleteSelection;
+    String _autoCompleteSelection;
     List<Widget> nameList = [];
     List<DropdownMenuItem<int>> menuItemList = [];
     _nameMap.forEach((key, value) {
@@ -153,6 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
               Expanded(
                   child: RawAutocomplete(
                       optionsBuilder: (TextEditingValue textEditingValue) {
+                _autoCompleteValue = textEditingValue.text;
                 return _kOptions.where((String option) {
                   return option
                       .toLowerCase()
@@ -160,7 +167,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 });
               }, onSelected: (String selection) {
                 setState(() {
-                  _autocompleteSelection = selection;
+                  _autoCompleteSelection = selection;
                 });
               }, fieldViewBuilder: (BuildContext context,
                           TextEditingController textEditingController,
@@ -219,7 +226,12 @@ class _MyHomePageState extends State<MyHomePage> {
               })),
               Padding(
                   padding: EdgeInsets.all(10.0),
-                  child: OutlinedButton(onPressed: () {}, child: Text('Add')))
+                  child: OutlinedButton(
+                      onPressed: () {
+                        if (_autoCompleteValue != null)
+                          addTask(_autoCompleteValue!, false);
+                      },
+                      child: Text('Add')))
             ]),
           ],
         ),
