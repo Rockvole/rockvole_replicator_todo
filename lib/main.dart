@@ -35,6 +35,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  List<String> _kOptions = [];
+  late List<TaskDto> _taskList;
   int? _chosenValue = 2;
   Map<int, String> _nameMap = {
     1: 'Android',
@@ -70,7 +72,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
     _taskDao = TaskDao(smd, transaction);
     await _taskDao.init(initTable: false);
-    if (!(await _taskDao.doesTableExist())) await _taskDao.createTable();
+    if ((await _taskDao.doesTableExist())) {
+      _taskList = await _taskDao.getTaskListByName(null);
+      _taskList.forEach((TaskDto taskDto) {
+        _kOptions.add(taskDto.task_description!);
+      });
+    } else {
+      await _taskDao.createTable();
+    }
     //await db.close();
   }
 
@@ -95,23 +104,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    const List<String> kOptions = <String>[
-      'A',
-      'An',
-      'And',
-      'Ant',
-      'Ball',
-      'Basket',
-      'Bounce',
-      'Bakery',
-      'Zoo',
-      'Zebra',
-      'Joo',
-      'June',
-      'King',
-      'Kite',
-      'Kama',
-    ];
+
     String _autocompleteSelection;
     List<Widget> nameList = [];
     List<DropdownMenuItem<int>> menuItemList = [];
@@ -158,7 +151,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             RawAutocomplete(
                 optionsBuilder: (TextEditingValue textEditingValue) {
-              return kOptions.where((String option) {
+              return _kOptions.where((String option) {
                 return option
                     .toLowerCase()
                     .contains(textEditingValue.text.toLowerCase());
@@ -181,7 +174,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   onFieldSubmitted();
                 },
                 validator: (String? value) {
-                  if (!kOptions.contains(value)) {
+                  if (!_kOptions.contains(value)) {
                     return 'Nothing selected.';
                   }
                   return null;
