@@ -1,3 +1,4 @@
+import 'package:flutter/painting.dart';
 import 'package:rockvole_replicator_todo/helpers/SqfliteHelper.dart';
 import 'package:yaml/yaml.dart';
 
@@ -104,7 +105,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     String _autocompleteSelection;
     List<Widget> nameList = [];
     List<DropdownMenuItem<int>> menuItemList = [];
@@ -149,72 +149,78 @@ class _MyHomePageState extends State<MyHomePage> {
                 });
               },
             ),
-            RawAutocomplete(
-                optionsBuilder: (TextEditingValue textEditingValue) {
-              return _kOptions.where((String option) {
-                return option
-                    .toLowerCase()
-                    .contains(textEditingValue.text.toLowerCase());
-              });
-            }, onSelected: (String selection) {
-              setState(() {
-                _autocompleteSelection = selection;
-              });
-            }, fieldViewBuilder: (BuildContext context,
-                    TextEditingController textEditingController,
-                    FocusNode focusNode,
-                    VoidCallback onFieldSubmitted) {
-              return TextFormField(
-                controller: textEditingController,
-                decoration: InputDecoration(
-                  hintText: 'This is an RawAutocomplete 2.0',
-                ),
-                focusNode: focusNode,
-                onFieldSubmitted: (String value) {
-                  onFieldSubmitted();
-                },
-                validator: (String? value) {
-                  if (!_kOptions.contains(value)) {
-                    return 'Nothing selected.';
-                  }
-                  return null;
-                },
-              );
-            }, optionsViewBuilder: (BuildContext context,
-                    AutocompleteOnSelected<String> onSelected,
-                    Iterable<String> options) {
-              final RenderBox renderBox =
-                  context.findRenderObject() as RenderBox;
-              return Align(
-                alignment: Alignment.topLeft,
-                child: Material(
-                  elevation: 4.0,
-                  child: SizedBox(
-                    height: 300.0,
-                    child: ListView(
-                      children: options
-                          .map((String option) => GestureDetector(
-                                onTap: () {
-                                  onSelected(option);
-                                },
-                                child: ListTile(
-                                  title: Card(
-                                      child: Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(
-                                      option,
-                                      style: TextStyle(
-                                          fontSize: 18, color: Colors.pink),
-                                    ),
-                                  )),
-                                ),
-                              ))
-                          .toList(),
+            Row(children: [
+              Expanded(
+                  child: RawAutocomplete(
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                return _kOptions.where((String option) {
+                  return option
+                      .toLowerCase()
+                      .contains(textEditingValue.text.toLowerCase());
+                });
+              }, onSelected: (String selection) {
+                setState(() {
+                  _autocompleteSelection = selection;
+                });
+              }, fieldViewBuilder: (BuildContext context,
+                          TextEditingController textEditingController,
+                          FocusNode focusNode,
+                          VoidCallback onFieldSubmitted) {
+                return TextFormField(
+                  controller: textEditingController,
+                  decoration: InputDecoration(
+                    hintText: 'This is an RawAutocomplete 2.0',
+                  ),
+                  focusNode: focusNode,
+                  onFieldSubmitted: (String value) {
+                    onFieldSubmitted();
+                  },
+                  validator: (String? value) {
+                    if (!_kOptions.contains(value)) {
+                      return 'Nothing selected.';
+                    }
+                    return null;
+                  },
+                );
+              }, optionsViewBuilder: (BuildContext context,
+                          AutocompleteOnSelected<String> onSelected,
+                          Iterable<String> options) {
+                final RenderBox renderBox =
+                    context.findRenderObject() as RenderBox;
+                return Align(
+                  alignment: Alignment.topLeft,
+                  child: Material(
+                    elevation: 4.0,
+                    child: SizedBox(
+                      height: 300.0,
+                      child: ListView(
+                        children: options
+                            .map((String option) => GestureDetector(
+                                  onTap: () {
+                                    onSelected(option);
+                                  },
+                                  child: ListTile(
+                                    title: Card(
+                                        child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: Text(
+                                        option,
+                                        style: TextStyle(
+                                            fontSize: 18, color: Colors.pink),
+                                      ),
+                                    )),
+                                  ),
+                                ))
+                            .toList(),
+                      ),
                     ),
                   ),
-                ),
-              );
-            })
+                );
+              })),
+              Padding(
+                  padding: EdgeInsets.all(10.0),
+                  child: OutlinedButton(onPressed: () {}, child: Text('Add')))
+            ]),
           ],
         ),
       ),
