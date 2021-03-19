@@ -93,7 +93,14 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> addTask(String task_description, bool task_complete) async {
     TaskDto taskDto = TaskDto.wee(null, task_description, task_complete);
-    await _taskDao.addTaskDto(taskDto, WardenType.USER);
+    try {
+      await _taskDao.addTaskDto(taskDto, WardenType.USER);
+      _kOptions.add(task_description);
+    } on SqlException catch (e) {
+      print(e);
+    }
+
+
   }
 
   @override
@@ -105,7 +112,6 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void setState(VoidCallback fn) {
     super.setState(fn);
-    print("chosen=" + _nameMap[_chosenValue].toString());
     insertTask(_chosenValue!, _nameMap[_chosenValue]!, false);
   }
 
@@ -230,6 +236,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: () {
                         if (_autoCompleteValue != null)
                           addTask(_autoCompleteValue!, false);
+                        setState(() {
+                          _autoCompleteValue = null;
+                        });
                       },
                       child: Text('Add')))
             ]),
