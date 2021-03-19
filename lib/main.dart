@@ -99,8 +99,6 @@ class _MyHomePageState extends State<MyHomePage> {
     } on SqlException catch (e) {
       print(e);
     }
-
-
   }
 
   @override
@@ -129,6 +127,72 @@ class _MyHomePageState extends State<MyHomePage> {
           style: TextStyle(color: Colors.black),
         ),
       ));
+    });
+    RawAutocomplete rawAutocomplete = RawAutocomplete(
+        optionsBuilder: (TextEditingValue textEditingValue) {
+      _autoCompleteValue = textEditingValue.text;
+      return _kOptions.where((String option) {
+        return option
+            .toLowerCase()
+            .contains(textEditingValue.text.toLowerCase());
+      });
+    }, onSelected: (Object selection) {
+      setState(() {
+        _autoCompleteSelection = selection as String;
+      });
+    }, fieldViewBuilder: (BuildContext context,
+            TextEditingController textEditingController,
+            FocusNode focusNode,
+            VoidCallback onFieldSubmitted) {
+      return TextFormField(
+        controller: textEditingController,
+        decoration: InputDecoration(
+          hintText: 'This is an RawAutocomplete 2.0',
+        ),
+        focusNode: focusNode,
+        onFieldSubmitted: (String value) {
+          onFieldSubmitted();
+        },
+        validator: (String? value) {
+          if (!_kOptions.contains(value)) {
+            return 'Nothing selected.';
+          }
+          return null;
+        },
+      );
+    }, optionsViewBuilder: (BuildContext context,
+            AutocompleteOnSelected<Object> onSelected,
+            Iterable<Object> options) {
+      final RenderBox renderBox = context.findRenderObject() as RenderBox;
+      return Align(
+        alignment: Alignment.topLeft,
+        child: Material(
+          elevation: 4.0,
+          child: SizedBox(
+            height: 300.0,
+            child: ListView(
+              children: options
+                  .map((Object option) => GestureDetector(
+                        onTap: () {
+                          onSelected(option);
+                        },
+                        child: ListTile(
+                          title: Card(
+                              child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              option as String,
+                              style:
+                                  TextStyle(fontSize: 18, color: Colors.pink),
+                            ),
+                          )),
+                        ),
+                      ))
+                  .toList(),
+            ),
+          ),
+        ),
+      );
     });
     return Scaffold(
       appBar: AppBar(
@@ -162,74 +226,7 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
             Row(children: [
-              Expanded(
-                  child: RawAutocomplete(
-                      optionsBuilder: (TextEditingValue textEditingValue) {
-                _autoCompleteValue = textEditingValue.text;
-                return _kOptions.where((String option) {
-                  return option
-                      .toLowerCase()
-                      .contains(textEditingValue.text.toLowerCase());
-                });
-              }, onSelected: (String selection) {
-                setState(() {
-                  _autoCompleteSelection = selection;
-                });
-              }, fieldViewBuilder: (BuildContext context,
-                          TextEditingController textEditingController,
-                          FocusNode focusNode,
-                          VoidCallback onFieldSubmitted) {
-                return TextFormField(
-                  controller: textEditingController,
-                  decoration: InputDecoration(
-                    hintText: 'This is an RawAutocomplete 2.0',
-                  ),
-                  focusNode: focusNode,
-                  onFieldSubmitted: (String value) {
-                    onFieldSubmitted();
-                  },
-                  validator: (String? value) {
-                    if (!_kOptions.contains(value)) {
-                      return 'Nothing selected.';
-                    }
-                    return null;
-                  },
-                );
-              }, optionsViewBuilder: (BuildContext context,
-                          AutocompleteOnSelected<String> onSelected,
-                          Iterable<String> options) {
-                final RenderBox renderBox =
-                    context.findRenderObject() as RenderBox;
-                return Align(
-                  alignment: Alignment.topLeft,
-                  child: Material(
-                    elevation: 4.0,
-                    child: SizedBox(
-                      height: 300.0,
-                      child: ListView(
-                        children: options
-                            .map((String option) => GestureDetector(
-                                  onTap: () {
-                                    onSelected(option);
-                                  },
-                                  child: ListTile(
-                                    title: Card(
-                                        child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Text(
-                                        option,
-                                        style: TextStyle(
-                                            fontSize: 18, color: Colors.pink),
-                                      ),
-                                    )),
-                                  ),
-                                ))
-                            .toList(),
-                      ),
-                    ),
-                  ),
-                );
-              })),
+              Expanded(child: rawAutocomplete),
               Padding(
                   padding: EdgeInsets.all(10.0),
                   child: OutlinedButton(
