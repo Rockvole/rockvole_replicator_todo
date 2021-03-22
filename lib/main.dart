@@ -238,12 +238,18 @@ class _MyHomePageState extends State<MyHomePage> {
                   padding: EdgeInsets.all(10.0),
                   child: OutlinedButton(
                       onPressed: () {
+                        String text=_textEditingController.text;
                         if (_autoCompleteValue != null)
                           addTask(_autoCompleteValue!, false);
                         setState(() {
                           _textEditingController.clear();
                           _autoCompleteValue = null;
                         });
+                        FocusScopeNode currentFocus = FocusScope.of(context);
+                        if(!currentFocus.hasPrimaryFocus) currentFocus.unfocus();
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          content: Text("Adding $text"),
+                        ));
                       },
                       child: Text('Add')))
             ]),
