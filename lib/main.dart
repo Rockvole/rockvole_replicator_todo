@@ -36,6 +36,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  TextEditingController _textEditingController = TextEditingController();
+  FocusNode _focusNode = FocusNode();
   String? _autoCompleteValue;
   List<String> _kOptions = [];
   late List<TaskDto> _taskList;
@@ -129,71 +131,76 @@ class _MyHomePageState extends State<MyHomePage> {
       ));
     });
     RawAutocomplete rawAutocomplete = RawAutocomplete(
+        textEditingController: _textEditingController,
+        focusNode: _focusNode,
         optionsBuilder: (TextEditingValue textEditingValue) {
-      _autoCompleteValue = textEditingValue.text;
-      return _kOptions.where((String option) {
-        return option
-            .toLowerCase()
-            .contains(textEditingValue.text.toLowerCase());
-      });
-    }, onSelected: (Object selection) {
-      setState(() {
-        _autoCompleteSelection = selection as String;
-      });
-    }, fieldViewBuilder: (BuildContext context,
+          _autoCompleteValue = textEditingValue.text;
+          return _kOptions.where((String option) {
+            return option
+                .toLowerCase()
+                .contains(textEditingValue.text.toLowerCase());
+          });
+        },
+        onSelected: (Object selection) {
+          setState(() {
+            _autoCompleteSelection = selection as String;
+          });
+        },
+        fieldViewBuilder: (BuildContext context,
             TextEditingController textEditingController,
             FocusNode focusNode,
             VoidCallback onFieldSubmitted) {
-      return TextFormField(
-        controller: textEditingController,
-        decoration: InputDecoration(
-          hintText: 'This is an RawAutocomplete 2.0',
-        ),
-        focusNode: focusNode,
-        onFieldSubmitted: (String value) {
-          onFieldSubmitted();
+          return TextFormField(
+            controller: textEditingController,
+            decoration: InputDecoration(
+              hintText: 'This is an RawAutocomplete 2.0',
+            ),
+            focusNode: focusNode,
+            onFieldSubmitted: (String value) {
+              onFieldSubmitted();
+            },
+            validator: (String? value) {
+              if (!_kOptions.contains(value)) {
+                return 'Nothing selected.';
+              }
+              return null;
+            },
+          );
         },
-        validator: (String? value) {
-          if (!_kOptions.contains(value)) {
-            return 'Nothing selected.';
-          }
-          return null;
-        },
-      );
-    }, optionsViewBuilder: (BuildContext context,
+        optionsViewBuilder: (BuildContext context,
             AutocompleteOnSelected<Object> onSelected,
             Iterable<Object> options) {
-      final RenderBox renderBox = context.findRenderObject() as RenderBox;
-      return Align(
-        alignment: Alignment.topLeft,
-        child: Material(
-          elevation: 4.0,
-          child: SizedBox(
-            height: 300.0,
-            child: ListView(
-              children: options
-                  .map((Object option) => GestureDetector(
-                        onTap: () {
-                          onSelected(option);
-                        },
-                        child: ListTile(
-                          title: Card(
-                              child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              option as String,
-                              style:
-                                  TextStyle(fontSize: 18, color: Colors.pink),
+          final RenderBox renderBox = context.findRenderObject() as RenderBox;
+          return Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 4.0,
+              child: SizedBox(
+                height: 300.0,
+                child: ListView(
+                  children: options
+                      .map((Object option) => GestureDetector(
+                            onTap: () {
+                              onSelected(option);
+                            },
+                            child: ListTile(
+                              title: Card(
+                                  child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                  option as String,
+                                  style: TextStyle(
+                                      fontSize: 18, color: Colors.pink),
+                                ),
+                              )),
                             ),
-                          )),
-                        ),
-                      ))
-                  .toList(),
+                          ))
+                      .toList(),
+                ),
+              ),
             ),
-          ),
-        ),
-      );
-    });
+          );
+        });
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -234,6 +241,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         if (_autoCompleteValue != null)
                           addTask(_autoCompleteValue!, false);
                         setState(() {
+                          _textEditingController.clear();
                           _autoCompleteValue = null;
                         });
                       },
