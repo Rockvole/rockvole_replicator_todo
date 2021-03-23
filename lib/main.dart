@@ -39,18 +39,8 @@ class _MyHomePageState extends State<MyHomePage> {
   TextEditingController _textEditingController = TextEditingController();
   FocusNode _focusNode = FocusNode();
   String? _autoCompleteValue;
-  List<String> _kOptions = [];
+  List<String> _taskNames = [];
   late List<TaskDto> _taskList;
-  int? _chosenValue = 2;
-  Map<int, String> _nameMap = {
-    1: 'Android',
-    2: 'IOS',
-    3: 'Flutter',
-    4: 'Node',
-    5: 'Java',
-    6: 'Python',
-    7: 'PHP'
-  };
   late SchemaMetaData smd;
   late SchemaMetaData smdSys;
   late TaskDao _taskDao;
@@ -79,25 +69,27 @@ class _MyHomePageState extends State<MyHomePage> {
     if ((await _taskDao.doesTableExist())) {
       _taskList = await _taskDao.getTaskListByName(null);
       _taskList.forEach((TaskDto taskDto) {
-        _kOptions.add(taskDto.task_description!);
+        _taskNames.add(taskDto.task_description!);
       });
+      _taskNames.sort();
     } else {
       await _taskDao.createTable();
     }
     //await db.close();
   }
 
-  Future<void> insertTask(
-      int id, String task_description, bool task_complete) async {
-    TaskDto taskDto = TaskDto.wee(id, task_description, task_complete);
-    await _taskDao.insertTaskDto(taskDto);
-  }
+  //Future<void> insertTask(
+  //    int id, String task_description, bool task_complete) async {
+  //  TaskDto taskDto = TaskDto.wee(id, task_description, task_complete);
+  //  await _taskDao.insertTaskDto(taskDto);
+  //}
 
   Future<void> addTask(String task_description, bool task_complete) async {
     TaskDto taskDto = TaskDto.wee(null, task_description, task_complete);
     try {
       await _taskDao.addTaskDto(taskDto, WardenType.USER);
-      _kOptions.add(task_description);
+      _taskNames.add(task_description);
+      _taskNames.sort();
     } on SqlException catch (e) {
       print(e);
     }
@@ -110,32 +102,14 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
-  void setState(VoidCallback fn) {
-    super.setState(fn);
-    insertTask(_chosenValue!, _nameMap[_chosenValue]!, false);
-  }
-
-  @override
   Widget build(BuildContext context) {
     String _autoCompleteSelection;
-    List<Widget> nameList = [];
-    List<DropdownMenuItem<int>> menuItemList = [];
-    _nameMap.forEach((key, value) {
-      nameList.add(Text(value, style: TextStyle(color: Colors.black)));
-      menuItemList.add(DropdownMenuItem<int>(
-        value: key,
-        child: Text(
-          value,
-          style: TextStyle(color: Colors.black),
-        ),
-      ));
-    });
     RawAutocomplete rawAutocomplete = RawAutocomplete(
         textEditingController: _textEditingController,
         focusNode: _focusNode,
         optionsBuilder: (TextEditingValue textEditingValue) {
           _autoCompleteValue = textEditingValue.text;
-          return _kOptions.where((String option) {
+          return _taskNames.where((String option) {
             return option
                 .toLowerCase()
                 .contains(textEditingValue.text.toLowerCase());
@@ -160,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
               onFieldSubmitted();
             },
             validator: (String? value) {
-              if (!_kOptions.contains(value)) {
+              if (!_taskNames.contains(value)) {
                 return 'Nothing selected.';
               }
               return null;
@@ -209,29 +183,6 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
-            DropdownButton<int>(
-              //focusColor: Colors.white,
-              value: _chosenValue,
-              //elevation: 5,
-              style: TextStyle(color: Colors.blue, fontSize: 18),
-              iconEnabledColor: Colors.black,
-              items: menuItemList,
-              //selectedItemBuilder: (BuildContext context) {
-              //  return nameList;
-              //},
-              hint: Text(
-                "Please choose a language",
-                style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500),
-              ),
-              onChanged: (int? value) {
-                setState(() {
-                  _chosenValue = value;
-                });
-              },
-            ),
             Row(children: [
               Expanded(child: rawAutocomplete),
               Padding(
