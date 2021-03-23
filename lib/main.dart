@@ -101,6 +101,14 @@ class _MyHomePageState extends State<MyHomePage> {
     setupDb();
   }
 
+  void blank() {
+    _textEditingController.clear();
+    _autoCompleteValue = null;
+    FocusScopeNode currentFocus = FocusScope.of(context);
+    if (!currentFocus.hasPrimaryFocus)
+      currentFocus.unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     String _autoCompleteSelection;
@@ -127,8 +135,11 @@ class _MyHomePageState extends State<MyHomePage> {
           return TextFormField(
             controller: textEditingController,
             decoration: InputDecoration(
-              hintText: 'This is an RawAutocomplete 2.0',
-            ),
+                hintText: 'This is an RawAutocomplete 2.0',
+                suffixIcon: IconButton(
+                  onPressed: () => blank(),
+                  icon: Icon(Icons.clear),
+                )),
             focusNode: focusNode,
             onFieldSubmitted: (String value) {
               onFieldSubmitted();
@@ -189,15 +200,10 @@ class _MyHomePageState extends State<MyHomePage> {
                   padding: EdgeInsets.all(10.0),
                   child: OutlinedButton(
                       onPressed: () {
-                        String text=_textEditingController.text;
+                        String text = _textEditingController.text;
                         if (_autoCompleteValue != null)
                           addTask(_autoCompleteValue!, false);
-                        setState(() {
-                          _textEditingController.clear();
-                          _autoCompleteValue = null;
-                        });
-                        FocusScopeNode currentFocus = FocusScope.of(context);
-                        if(!currentFocus.hasPrimaryFocus) currentFocus.unfocus();
+                        blank();
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: Text("Adding $text"),
                         ));
