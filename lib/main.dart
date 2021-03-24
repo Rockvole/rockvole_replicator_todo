@@ -1,4 +1,6 @@
 import 'package:flutter/painting.dart';
+import 'package:rockvole_replicator_todo/dao/TaskHcDao.dart';
+import 'package:rockvole_replicator_todo/dao/TaskMixin.dart';
 import 'package:rockvole_replicator_todo/helpers/SqfliteHelper.dart';
 import 'package:yaml/yaml.dart';
 
@@ -40,18 +42,21 @@ class _MyHomePageState extends State<MyHomePage> {
   FocusNode _focusNode = FocusNode();
   String? _autoCompleteValue;
   List<String> _taskNames = [];
+  late DbTransaction _transaction;
   late List<TaskDto> _taskList;
-  late SchemaMetaData smd;
-  late SchemaMetaData smdSys;
+  late SchemaMetaData _smd;
+  late SchemaMetaData _smdSys;
   late TaskDao _taskDao;
+  WardenType _localWardenType = WardenType.USER;
+  WardenType _remoteWardenType = WardenType.USER;
 
   Future<void> getYaml() async {
     String yamlString =
         await rootBundle.loadString('ancillary/assets/todo_schema.yaml');
     YamlMap yaml = loadYaml(yamlString);
-    smd = SchemaMetaData.yaml(yaml);
-    smd = SchemaMetaDataTools.createSchemaMetaData(smd);
-    SchemaMetaData smdSys = TransactionTools.createHcSchemaMetaData(smd);
+    _smd = SchemaMetaData.yaml(yaml);
+    _smd = SchemaMetaDataTools.createSchemaMetaData(_smd);
+    _smdSys = TransactionTools.createHcSchemaMetaData(_smd);
   }
 
   Future<void> setupDb() async {
@@ -61,10 +66,10 @@ class _MyHomePageState extends State<MyHomePage> {
     var databasesPath = (await getDatabasesPath()).toString() + "/task_data.db";
     AbstractDatabase db = SqfliteDatabase.filename(databasesPath);
     await db.connect();
-    DbTransaction transaction = await SqfliteHelper.getSqfliteDbTransaction(
+    _transaction = await SqfliteHelper.getSqfliteDbTransaction(
         'task_data', (await getDatabasesPath()).toString());
 
-    _taskDao = TaskDao(smd, transaction);
+    _taskDao = TaskDao(_smd, _transaction);
     await _taskDao.init(initTable: false);
     if ((await _taskDao.doesTableExist())) {
       _taskList = await _taskDao.getTaskListByName(null);
@@ -78,16 +83,20 @@ class _MyHomePageState extends State<MyHomePage> {
     //await db.close();
   }
 
-  //Future<void> insertTask(
-  //    int id, String task_description, bool task_complete) async {
-  //  TaskDto taskDto = TaskDto.wee(id, task_description, task_complete);
-  //  await _taskDao.insertTaskDto(taskDto);
-  //}
-
   Future<void> addTask(String task_description, bool task_complete) async {
-    TaskDto taskDto = TaskDto.wee(null, task_description, task_complete);
+    AbstractWarden abstractWarden =
+        ClientWardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
+    await abstractWarden.init(TaskMixin.C_TABLE_ID, _smd, _smdSys, _transaction);
+    HcDto hcDto = HcDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
+        null, TaskMixin.C_TABLE_ID);
+    TaskHcDto taskHcDto =
+        TaskHcDto.sep(null, task_description, task_complete, hcDto);
+    AbstractTableTransactions tableTransactions =
+        TableTransactions.sep(taskHcDto, TaskMixin.C_TABLE_ID);
+    await tableTransactions.init(_localWardenType, _remoteWardenType, _smd, _smdSys, _transaction);
+    abstractWarden.initialize(tableTransactions);
     try {
-      await _taskDao.addTaskDto(taskDto, WardenType.USER);
+      await abstractWarden.write();
       _taskNames.add(task_description);
       _taskNames.sort();
     } on SqlException catch (e) {
@@ -105,8 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
     _textEditingController.clear();
     _autoCompleteValue = null;
     FocusScopeNode currentFocus = FocusScope.of(context);
-    if (!currentFocus.hasPrimaryFocus)
-      currentFocus.unfocus();
+    if (!currentFocus.hasPrimaryFocus) currentFocus.unfocus();
   }
 
   @override
