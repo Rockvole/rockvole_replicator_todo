@@ -42,7 +42,6 @@ class _MyHomePageState extends State<MyHomePage> {
   FocusNode _focusNode = FocusNode();
   String? _autoCompleteValue;
   List<String> _taskNames = [];
-  late DbTransaction _transaction;
   late List<TaskDto> _taskList;
   late SchemaMetaData _smd;
   late SchemaMetaData _smdSys;
@@ -59,17 +58,25 @@ class _MyHomePageState extends State<MyHomePage> {
     _smdSys = TransactionTools.createHcSchemaMetaData(_smd);
   }
 
-  Future<void> setupDb() async {
-    await getYaml();
-    ConfigurationNameDefaults defaults = ConfigurationNameDefaults();
-
+  Future<AbstractDatabase> getConnection() async {
     var databasesPath = (await getDatabasesPath()).toString() + "/task_data.db";
     AbstractDatabase db = SqfliteDatabase.filename(databasesPath);
     await db.connect();
-    _transaction = await SqfliteHelper.getSqfliteDbTransaction(
-        'task_data', (await getDatabasesPath()).toString());
+    return db;
+  }
 
-    _taskDao = TaskDao(_smd, _transaction);
+  Future<DbTransaction> getTransaction() async {
+    DbTransaction transaction = await SqfliteHelper.getSqfliteDbTransaction(
+    'task_data', (await getDatabasesPath()).toString());
+    return transaction;
+  }
+
+  Future<void> setupDb() async {
+    await getYaml();
+    AbstractDatabase db = await getConnection();
+    DbTransaction transaction = await getTransaction();
+
+    _taskDao = TaskDao(_smd, transaction);
     await _taskDao.init(initTable: false);
     if ((await _taskDao.doesTableExist())) {
       _taskList = await _taskDao.getTaskListByName(null);
@@ -80,20 +87,23 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       await _taskDao.createTable();
     }
-    //await db.close();
+    await db.close();
   }
 
   Future<void> addTask(String task_description, bool task_complete) async {
+    AbstractDatabase db = await getConnection();
+    DbTransaction transaction = await getTransaction();
+
     AbstractWarden abstractWarden =
         ClientWardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
-    await abstractWarden.init(TaskMixin.C_TABLE_ID, _smd, _smdSys, _transaction);
+    await abstractWarden.init(TaskMixin.C_TABLE_ID, _smd, _smdSys, transaction);
     HcDto hcDto = HcDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
         null, TaskMixin.C_TABLE_ID);
     TaskHcDto taskHcDto =
         TaskHcDto.sep(null, task_description, task_complete, hcDto);
     AbstractTableTransactions tableTransactions =
         TableTransactions.sep(taskHcDto, TaskMixin.C_TABLE_ID);
-    await tableTransactions.init(_localWardenType, _remoteWardenType, _smd, _smdSys, _transaction);
+    await tableTransactions.init(_localWardenType, _remoteWardenType, _smd, _smdSys, transaction);
     abstractWarden.initialize(tableTransactions);
     try {
       await abstractWarden.write();
@@ -102,6 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
     } on SqlException catch (e) {
       print(e);
     }
+    await db.close();
   }
 
   @override
