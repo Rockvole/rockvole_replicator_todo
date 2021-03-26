@@ -1,7 +1,6 @@
 import 'package:flutter/painting.dart';
 import 'package:rockvole_replicator_todo/dao/TaskHcDao.dart';
 import 'package:rockvole_replicator_todo/dao/TaskMixin.dart';
-import 'package:rockvole_replicator_todo/helpers/SqfliteHelper.dart';
 import 'package:yaml/yaml.dart';
 
 import 'package:flutter/services.dart' show rootBundle;
@@ -9,9 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:rockvole_db/rockvole_db.dart';
 import 'package:rockvole_db/rockvole_transactions.dart';
 import 'package:rockvole_db/rockvole_web_services.dart';
-import 'package:rockvole_db/rockvole_sqflite.dart';
-import 'package:sqflite/sqflite.dart';
 import 'dao/TaskDao.dart';
+import 'database_access.dart';
 
 void main() => runApp(MyApp());
 
@@ -58,23 +56,10 @@ class _MyHomePageState extends State<MyHomePage> {
     _smdSys = TransactionTools.createHcSchemaMetaData(_smd);
   }
 
-  Future<AbstractDatabase> getConnection() async {
-    var databasesPath = (await getDatabasesPath()).toString() + "/task_data.db";
-    AbstractDatabase db = SqfliteDatabase.filename(databasesPath);
-    await db.connect();
-    return db;
-  }
-
-  Future<DbTransaction> getTransaction() async {
-    DbTransaction transaction = await SqfliteHelper.getSqfliteDbTransaction(
-    'task_data', (await getDatabasesPath()).toString());
-    return transaction;
-  }
-
   Future<void> setupDb() async {
     await getYaml();
-    AbstractDatabase db = await getConnection();
-    DbTransaction transaction = await getTransaction();
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
 
     _taskDao = TaskDao(_smd, transaction);
     await _taskDao.init(initTable: false);
@@ -91,8 +76,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> addTask(String task_description, bool task_complete) async {
-    AbstractDatabase db = await getConnection();
-    DbTransaction transaction = await getTransaction();
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
 
     AbstractWarden abstractWarden =
         ClientWardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
