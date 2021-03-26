@@ -1,14 +1,6 @@
 import 'package:flutter/painting.dart';
-import 'package:rockvole_replicator_todo/dao/TaskHcDao.dart';
-import 'package:rockvole_replicator_todo/dao/TaskMixin.dart';
-import 'package:yaml/yaml.dart';
-
-import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
-import 'package:rockvole_db/rockvole_db.dart';
-import 'package:rockvole_db/rockvole_transactions.dart';
-import 'package:rockvole_db/rockvole_web_services.dart';
-import 'dao/TaskDao.dart';
+
 import 'database_access.dart';
 
 void main() => runApp(MyApp());
@@ -38,72 +30,20 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   TextEditingController _textEditingController = TextEditingController();
   FocusNode _focusNode = FocusNode();
+  late DataBaseAccess _dbAccess;
   String? _autoCompleteValue;
   List<String> _taskNames = [];
-  late List<TaskDto> _taskList;
-  late SchemaMetaData _smd;
-  late SchemaMetaData _smdSys;
-  late TaskDao _taskDao;
-  WardenType _localWardenType = WardenType.USER;
-  WardenType _remoteWardenType = WardenType.USER;
 
-  Future<void> getYaml() async {
-    String yamlString =
-        await rootBundle.loadString('ancillary/assets/todo_schema.yaml');
-    YamlMap yaml = loadYaml(yamlString);
-    _smd = SchemaMetaData.yaml(yaml);
-    _smd = SchemaMetaDataTools.createSchemaMetaData(_smd);
-    _smdSys = TransactionTools.createHcSchemaMetaData(_smd);
-  }
 
-  Future<void> setupDb() async {
-    await getYaml();
-    AbstractDatabase db = await DataBaseAccess.getConnection();
-    DbTransaction transaction = await DataBaseAccess.getTransaction();
-
-    _taskDao = TaskDao(_smd, transaction);
-    await _taskDao.init(initTable: false);
-    if ((await _taskDao.doesTableExist())) {
-      _taskList = await _taskDao.getTaskListByName(null);
-      _taskList.forEach((TaskDto taskDto) {
-        _taskNames.add(taskDto.task_description!);
-      });
-      _taskNames.sort();
-    } else {
-      await _taskDao.createTable();
-    }
-    await db.close();
-  }
-
-  Future<void> addTask(String task_description, bool task_complete) async {
-    AbstractDatabase db = await DataBaseAccess.getConnection();
-    DbTransaction transaction = await DataBaseAccess.getTransaction();
-
-    AbstractWarden abstractWarden =
-        ClientWardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
-    await abstractWarden.init(TaskMixin.C_TABLE_ID, _smd, _smdSys, transaction);
-    HcDto hcDto = HcDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
-        null, TaskMixin.C_TABLE_ID);
-    TaskHcDto taskHcDto =
-        TaskHcDto.sep(null, task_description, task_complete, hcDto);
-    AbstractTableTransactions tableTransactions =
-        TableTransactions.sep(taskHcDto, TaskMixin.C_TABLE_ID);
-    await tableTransactions.init(_localWardenType, _remoteWardenType, _smd, _smdSys, transaction);
-    abstractWarden.initialize(tableTransactions);
-    try {
-      await abstractWarden.write();
-      _taskNames.add(task_description);
-      _taskNames.sort();
-    } on SqlException catch (e) {
-      print(e);
-    }
-    await db.close();
+  Future<void> initDb() async {
+    _dbAccess = DataBaseAccess();
+    _taskNames = await _dbAccess.setupDb();
   }
 
   @override
   void initState() {
     super.initState();
-    setupDb();
+    initDb();
   }
 
   void blank() {
@@ -203,10 +143,10 @@ class _MyHomePageState extends State<MyHomePage> {
               Padding(
                   padding: EdgeInsets.all(10.0),
                   child: OutlinedButton(
-                      onPressed: () {
+                      onPressed: () async {
                         String text = _textEditingController.text;
                         if (_autoCompleteValue != null)
-                          addTask(_autoCompleteValue!, false);
+                          _taskNames = await _dbAccess.addTask(_autoCompleteValue!, false, _taskNames);
                         blank();
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: Text("Adding $text"),
