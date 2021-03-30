@@ -10,7 +10,7 @@ class AnimatedSync extends AnimatedWidget {
     return Transform.rotate(
       angle: animation.value,
       child: IconButton(
-          icon: Icon(Icons.sync), // <-- Icon
+          icon: Icon(Icons.refresh_rounded), // <-- Icon
           onPressed: () => callback()),
     );
   }
