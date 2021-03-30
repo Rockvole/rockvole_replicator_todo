@@ -2,6 +2,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/material.dart';
 
 import 'database_access.dart';
+import 'refresh_service.dart';
 
 void main() => runApp(MyApp());
 
@@ -27,23 +28,35 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage>
+    with SingleTickerProviderStateMixin {
   TextEditingController _textEditingController = TextEditingController();
+  late AnimationController controller;
+  late Animation colorAnimation;
+  late Animation rotateAnimation;
   FocusNode _focusNode = FocusNode();
   late DataBaseAccess _dbAccess;
   String? _autoCompleteValue;
   List<String> _taskNames = [];
-
 
   Future<void> initDb() async {
     _dbAccess = DataBaseAccess();
     _taskNames = await _dbAccess.setupDb();
   }
 
+  Future<bool> syncDatabaseFull() async {
+    await Future.delayed(Duration(seconds: 5), () {});
+    return Future.value(true);
+  }
+
   @override
   void initState() {
     super.initState();
     initDb();
+
+    controller =
+        AnimationController(vsync: this, duration: Duration(seconds: 200));
+    rotateAnimation = Tween<double>(begin: 0.0, end: 360.0).animate(controller);
   }
 
   void blank() {
@@ -133,6 +146,17 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: <Widget>[
+          AnimatedSync(
+            animation: rotateAnimation as Animation<double>,
+            callback: () async {
+              await controller.forward();
+              await syncDatabaseFull();
+              controller.stop();
+              controller.reset();
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(
@@ -146,7 +170,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       onPressed: () async {
                         String text = _textEditingController.text;
                         if (_autoCompleteValue != null)
-                          _taskNames = await _dbAccess.addTask(_autoCompleteValue!, false, _taskNames);
+                          _taskNames = await _dbAccess.addTask(
+                              _autoCompleteValue!, false, _taskNames);
                         blank();
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: Text("Adding $text"),
