@@ -1,5 +1,6 @@
 import 'package:flutter/painting.dart';
 import 'package:flutter/material.dart';
+import 'package:pedantic/pedantic.dart';
 
 import 'database_access.dart';
 import 'refresh_service.dart';
@@ -32,7 +33,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   TextEditingController _textEditingController = TextEditingController();
-  late AnimationController controller;
+  late AnimationController _controller;
   late Animation colorAnimation;
   late Animation rotateAnimation;
   FocusNode _focusNode = FocusNode();
@@ -46,7 +47,12 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Future<bool> syncDatabaseFull() async {
-    await Future.delayed(Duration(seconds: 5), () {});
+    print('start long op');
+    unawaited(_controller.forward());
+    await Future.delayed(Duration(seconds: 10), () {});
+    print('stop long op');
+    _controller.stop();
+    _controller.reset();
     return Future.value(true);
   }
 
@@ -55,9 +61,15 @@ class _MyHomePageState extends State<MyHomePage>
     super.initState();
     initDb();
 
-    controller =
+    _controller =
         AnimationController(vsync: this, duration: Duration(seconds: 200));
-    rotateAnimation = Tween<double>(begin: 0.0, end: 360.0).animate(controller);
+    rotateAnimation = Tween<double>(begin: 0.0, end: 360.0).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   void blank() {
@@ -151,10 +163,7 @@ class _MyHomePageState extends State<MyHomePage>
           AnimatedSync(
             animation: rotateAnimation as Animation<double>,
             callback: () async {
-              await controller.forward();
               await syncDatabaseFull();
-              controller.stop();
-              controller.reset();
             },
           ),
         ],
