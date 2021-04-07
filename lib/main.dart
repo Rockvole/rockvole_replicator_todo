@@ -1,9 +1,12 @@
 import 'package:flutter/painting.dart';
 import 'package:flutter/material.dart';
 import 'package:pedantic/pedantic.dart';
+import 'package:rockvole_db/rockvole_transactions.dart';
+import 'package:rockvole_db/rockvole_web_services.dart';
 
 import 'database_access.dart';
 import 'refresh_service.dart';
+import 'web_service.dart';
 
 void main() => runApp(MyApp());
 
@@ -37,19 +40,26 @@ class _MyHomePageState extends State<MyHomePage>
   late Animation colorAnimation;
   late Animation rotateAnimation;
   FocusNode _focusNode = FocusNode();
+  late ConfigurationNameDefaults _defaults;
+  late UserTools _userTools;
   late DataBaseAccess _dbAccess;
+  late WebService _webService;
   String? _autoCompleteValue;
   List<String> _taskNames = [];
 
   Future<void> initDb() async {
     _dbAccess = DataBaseAccess();
     _taskNames = await _dbAccess.setupDb();
+    _defaults=ConfigurationNameDefaults();
+    _userTools=UserTools();
+    _webService=WebService(_dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults);
   }
 
   Future<bool> syncDatabaseFull() async {
     print('start long op');
     unawaited(_controller.forward());
-    await Future.delayed(Duration(seconds: 10), () {});
+    //await Future.delayed(Duration(seconds: 10), () {});
+    await _webService.requestDataFromServer(WaterState.SERVER_APPROVED);
     print('stop long op');
     _controller.stop();
     _controller.reset();
