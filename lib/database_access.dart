@@ -29,12 +29,18 @@ class DataBaseAccess {
     smdSys = TransactionTools.createHcSchemaMetaData(smd);
   }
 
-  Future<List<String>> setupDb() async {
+  Future<List<String>> setupDb(ConfigurationNameDefaults defaults) async {
     List<String> taskNames = [];
     await getYaml();
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
+    // Initialise Configuration table
+    ConfigurationDao configurationDao=ConfigurationDao(smd, transaction, defaults);
+    await configurationDao.init(initTable: false);
+    await configurationDao.insertDefaultValues();
+
+    // Get list of tasks
     _taskDao = TaskDao(smd, transaction);
     await _taskDao.init(initTable: false);
     if ((await _taskDao.doesTableExist())) {

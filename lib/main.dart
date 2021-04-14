@@ -49,8 +49,8 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> initDb() async {
     _dbAccess = DataBaseAccess();
-    _taskNames = await _dbAccess.setupDb();
     _defaults=ConfigurationNameDefaults();
+    _taskNames = await _dbAccess.setupDb(_defaults);
     _userTools=UserTools();
     _webService=WebService(_dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults);
   }
