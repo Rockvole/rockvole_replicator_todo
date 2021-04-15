@@ -40,15 +40,25 @@ class DataBaseAccess {
     await configurationDao.init(initTable: false);
     await configurationDao.insertDefaultValues();
 
+    UserDao userDao = UserDao(smd, transaction);
+    await userDao.init();
+    int rowCount = await userDao.getRowCount();
+    if(rowCount==0) {
+      UserDto userDto = UserDto.sep(1,null,0,WardenType.USER,0,0);
+      await userDao.insertDto(userDto);
+    }
     // Get list of tasks
     _taskDao = TaskDao(smd, transaction);
     await _taskDao.init(initTable: false);
     if ((await _taskDao.doesTableExist())) {
-      _taskList = await _taskDao.getTaskListByName(null);
-      _taskList.forEach((TaskDto taskDto) {
-        taskNames.add(taskDto.task_description!);
-      });
-      taskNames.sort();
+      try {
+        _taskList = await _taskDao.getTaskListByName(null);
+        _taskList.forEach((TaskDto taskDto) {
+          taskNames.add(taskDto.task_description!);
+        });
+        taskNames.sort();
+      } on SqlException {
+      }
     } else {
       await _taskDao.createTable();
     }
