@@ -47,6 +47,13 @@ class DataBaseAccess {
       UserDto userDto = UserDto.sep(1,null,0,WardenType.USER,0,0);
       await userDao.insertDto(userDto);
     }
+    UserStoreDao userStoreDao = UserStoreDao(smd, transaction);
+    await userStoreDao.init();
+    rowCount = await userStoreDao.getRowCount();
+    if(rowCount==0) {
+      UserStoreDto userStoreDto = UserStoreDto.sep(1,'user@user.com',0,'User','User',0,0,0);
+      await userStoreDao.insertDto(userStoreDto);
+    }
     // Get list of tasks
     _taskDao = TaskDao(smd, transaction);
     await _taskDao.init(initTable: false);
