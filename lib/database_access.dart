@@ -99,6 +99,14 @@ class DataBaseAccess {
     return taskNames;
   }
 
+  Future<UserDto?> getCurrentUserDto(SchemaMetaData smd, UserTools userTools) async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+    UserDto? currentUserDto = await userTools.getCurrentUserDto(smd, transaction);
+    await db.close();
+    return currentUserDto;
+  }
+
   static Future<AbstractDatabase> getConnection() async {
     var databasesPath = (await getDatabasesPath()).toString() + "/task_data.db";
     AbstractDatabase db = SqfliteDatabase.filename(databasesPath);

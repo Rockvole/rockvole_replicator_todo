@@ -24,7 +24,7 @@ class WebService {
   }
 
   Future<AuthenticationDto?> authenticateUser(String passKey,
-      WaterState stateType, bool userInitiated, int version) async {
+      WaterState stateType, bool userInitiated) async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
@@ -43,7 +43,7 @@ class WebService {
     try {
       currentTs = TimeUtils.getNowCustomTs();
       remoteDto = await authenticationUtils.requestAuthenticationFromServer(
-          stateType, version);
+          stateType, 1);
       print(remoteDto.toString());
     } on SqlException catch (e) {
       if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND ||

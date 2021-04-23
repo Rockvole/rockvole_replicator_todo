@@ -44,6 +44,7 @@ class _MyHomePageState extends State<MyHomePage>
   late UserTools _userTools;
   late DataBaseAccess _dbAccess;
   late WebService _webService;
+  UserDto? _currentUserDto;
   String? _autoCompleteValue;
   List<String> _taskNames = [];
 
@@ -52,13 +53,16 @@ class _MyHomePageState extends State<MyHomePage>
     _defaults=ConfigurationNameDefaults();
     _taskNames = await _dbAccess.setupDb(_defaults);
     _userTools=UserTools();
+    _currentUserDto = await _dbAccess.getCurrentUserDto(_dbAccess.smd, _userTools);
     _webService=WebService(_dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults);
   }
 
   Future<bool> syncDatabaseFull() async {
     print('start long op');
     unawaited(_controller.forward());
+    String? passKey = _currentUserDto!.pass_key;
     //await Future.delayed(Duration(seconds: 10), () {});
+    await _webService.authenticateUser(passKey!, WaterState.SERVER_APPROVED, false);
     await _webService.requestDataFromServer(WaterState.SERVER_APPROVED);
     print('stop long op');
     _controller.stop();
