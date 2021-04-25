@@ -3,17 +3,17 @@ import 'package:rockvole_db/rockvole_db.dart';
 import 'package:rockvole_db/rockvole_transactions.dart';
 import 'package:rockvole_db/rockvole_web_services.dart';
 
-import 'database_access.dart';
+import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 
 class WebService {
+  static int C_VERSION = 1;
   SchemaMetaData smd;
   SchemaMetaData smdSys;
   UserTools userTools;
   ConfigurationNameDefaults defaults;
   late AbstractWarden warden;
 
-  WebService(
-      this.smd, this.smdSys, this.userTools, this.defaults) {
+  WebService(this.smd, this.smdSys, this.userTools, this.defaults) {
     bool isAdmin = false;
     if (isAdmin)
       warden = ClientWardenFactory.getAbstractWarden(
@@ -23,8 +23,155 @@ class WebService {
           WardenType.USER, WardenType.READ_SERVER);
   }
 
-  Future<AuthenticationDto?> authenticateUser(String passKey,
-      WaterState stateType, bool userInitiated) async {
+  Future<void> sendChanges(
+      TransmitStatusDto transmitStatusDto, bool sendNow) async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+    late RemoteDto remoteDto;
+
+    WaterLineDao waterLineDao = WaterLineDao.sep(smdSys, transaction);
+    late RestPostNewRowUtils restPostNewRowUtils;
+    try {
+      restPostNewRowUtils = RestPostNewRowUtils(
+          warden.localWardenType,
+          warden.remoteWardenType,
+          smd,
+          smdSys,
+          transaction,
+          userTools,
+          defaults);
+    } on SqlException catch (e) {
+      if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND)
+        print("UI $e");
+    }
+    int? sendMins = await userTools.getConfigurationInteger(
+        smd, transaction, ConfigurationNameEnum.SEND_CHANGES_DELAY_MINS);
+    ClientWarden clientWarden =
+        ClientWarden(warden.localWardenType, waterLineDao);
+    List<WaterLineDto> waterLineList;
+    try {
+      waterLineList = await clientWarden.getWaterLineListToSend();
+    } on SqlException catch (e) {
+      if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND ||
+          e.sqlExceptionEnum == SqlExceptionEnum.FAILED_SELECT) print("UI $e");
+      return;
+    }
+    int cts = TimeUtils.getNowCustomTs();
+    WaterLineDto waterLineDto;
+    Iterator<WaterLineDto> waterLineDtoIter = waterLineList.iterator;
+    List<RemoteDto> remoteDtoList = [];
+
+    // Iterate to compile list of entries to send
+    while (waterLineDtoIter.moveNext()) {
+      waterLineDto = waterLineDtoIter.current;
+      try {
+        remoteDto = await RemoteDtoFactory.getRemoteDtoFromWaterLineDto(
+            waterLineDto, warden.localWardenType, smdSys, transaction, false);
+        if (sendNow ||
+            (cts - (sendMins! * 60) >= remoteDto.hcDto.user_ts!) ||
+            remoteDto.waterLineDto!.water_state == WaterState.CLIENT_APPROVED ||
+            remoteDto.waterLineDto!.water_state == WaterState.CLIENT_REJECTED) {
+          remoteDtoList.add(remoteDto);
+        }
+      } on SqlException catch (e) {
+        if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND ||
+            e.sqlExceptionEnum == SqlExceptionEnum.FAILED_SELECT ||
+            e.sqlExceptionEnum == SqlExceptionEnum.PARTITION_NOT_FOUND)
+          print("UI $e");
+      }
+    }
+    // Send the list of compiled entries
+    bool sentItem = false;
+    Iterator<RemoteDto> remoteDtoIter = remoteDtoList.iterator;
+    int totalCount = remoteDtoList.length;
+    int remainingCount = totalCount;
+    int sentCount = 0;
+    EntryReceivedDto entryReceivedDto;
+    try {
+      while (remoteDtoIter.moveNext()) {
+        remoteDto = remoteDtoIter.current;
+        if (!sentItem) {
+          transmitStatusDto = TransmitStatusDto(TransmitStatus.UPLOAD_STARTED);
+          sentItem = true;
+        }
+        if (remoteDtoList.length > 1) {
+          transmitStatusDto = TransmitStatusDto(
+              TransmitStatus.RECORDS_REMAINING,
+              message: remainingCount.toString() + " records to send",
+              completedRecords: sentCount,
+              totalRecords: totalCount,
+              userInitiated: false);
+        }
+        try {
+          entryReceivedDto = await restPostNewRowUtils.sendRemoteDtoToServer(
+              remoteDto, C_VERSION) as EntryReceivedDto;
+          print("PostNewRow: $remoteDto|| Received: $entryReceivedDto");
+          if (remoteDto.hcDto.operation == OperationType.INSERT) {
+            //refreshPageOttoDto.add(entryReceivedDto.getOriginalTableType(), entryReceivedDto.getOriginalId(), entryReceivedDto.getNewId());
+          }
+        } on TransmitStatusException catch (e1) {
+          print(e1.cause.toString() + "||$remoteDto");
+          if (e1.remoteStatus != null) {
+            switch (e1.remoteStatus) {
+              case RemoteStatus.EMAIL_ALREADY_EXISTS:
+                //RevertChangesOttoDto revertChangesOttoDto = new RevertChangesOttoDto(remoteDto.getHcDto().getTs());
+                //FoodApplication.getEventBus().post(revertChangesOttoDto);
+                throw TransmitStatusException(null,
+                    cause: "E-Mail Address Already Exists",
+                    remoteStatus: e1.remoteStatus,
+                    sourceName: e1.sourceName);
+              case RemoteStatus.DUPLICATE_ENTRY:
+                try {
+                  await waterLineDao.updateWaterLine(
+                      remoteDto.waterLineDto!.water_ts!,
+                      null,
+                      WaterState.CLIENT_SENT,
+                      null);
+                  continue;
+                } on SqlException catch (e) {
+                  //FailedUpdateException | FailedSelectException | PartitionNotFoundException e2) {
+                  if (e.sqlExceptionEnum == SqlExceptionEnum.FAILED_UPDATE ||
+                      e.sqlExceptionEnum == SqlExceptionEnum.FAILED_SELECT ||
+                      e.sqlExceptionEnum ==
+                          SqlExceptionEnum.PARTITION_NOT_FOUND)
+                    print(StackTrace.current);
+                }
+                break;
+              case RemoteStatus.EXPECTED_PASSKEY:
+                continue;
+              default:
+            }
+            throw TransmitStatusException(null,
+                cause: e1.cause,
+                remoteStatus: e1.remoteStatus,
+                sourceName: e1.sourceName);
+          }
+          throw TransmitStatusException(e1.transmitStatus,
+              cause: e1.cause, sourceName: e1.sourceName);
+        }
+        remainingCount--;
+        sentCount++;
+      }
+    } on SqlException catch (e) {
+      //EntryNotFoundException e) {
+      if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND)
+        print("UI $e");
+    }
+    if (sentItem) {
+      //FoodApplication.getUiEventBus().post(new SharingFragmentOtto(SharingFragment.SharingType.UNKNOWN, false));
+      transmitStatusDto = TransmitStatusDto(TransmitStatus.UPLOAD_COMPLETE,
+          message: totalCount.toString() + " records sent",
+          completedRecords: totalCount,
+          totalRecords: totalCount,
+          userInitiated: false);
+      //FoodApplication.getUiEventBus().post(transmitStatusDto);
+      //FoodApplication.getEventBus().post(refreshPageOttoDto);
+    }
+    await db.close();
+  }
+
+  Future<AuthenticationDto?> authenticateUser(
+      String passKey, WaterState stateType, bool userInitiated) async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
@@ -43,7 +190,7 @@ class WebService {
     try {
       currentTs = TimeUtils.getNowCustomTs();
       remoteDto = await authenticationUtils.requestAuthenticationFromServer(
-          stateType, 1);
+          stateType, C_VERSION);
       print(remoteDto.toString());
     } on SqlException catch (e) {
       if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND ||
