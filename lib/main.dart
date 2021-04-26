@@ -62,7 +62,11 @@ class _MyHomePageState extends State<MyHomePage>
     unawaited(_controller.forward());
     String? passKey = _currentUserDto!.pass_key;
     //await Future.delayed(Duration(seconds: 10), () {});
-    await _webService.authenticateUser(passKey!, WaterState.SERVER_APPROVED, false);
+    bool isNewUser = (_currentUserDto!.id==1);
+    if (!isNewUser && _currentUserDto!.pass_key!=null) {
+      await _webService.sendChanges(null, true);
+    }
+    await _webService.authenticateUser(WaterState.SERVER_APPROVED, false);
     await _webService.requestDataFromServer(WaterState.SERVER_APPROVED);
     print('stop long op');
     _controller.stop();

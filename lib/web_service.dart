@@ -24,7 +24,7 @@ class WebService {
   }
 
   Future<void> sendChanges(
-      TransmitStatusDto transmitStatusDto, bool sendNow) async {
+      TransmitStatusDto? transmitStatusDto, bool sendNow) async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     late RemoteDto remoteDto;
@@ -129,7 +129,6 @@ class WebService {
                       null);
                   continue;
                 } on SqlException catch (e) {
-                  //FailedUpdateException | FailedSelectException | PartitionNotFoundException e2) {
                   if (e.sqlExceptionEnum == SqlExceptionEnum.FAILED_UPDATE ||
                       e.sqlExceptionEnum == SqlExceptionEnum.FAILED_SELECT ||
                       e.sqlExceptionEnum ==
@@ -153,7 +152,6 @@ class WebService {
         sentCount++;
       }
     } on SqlException catch (e) {
-      //EntryNotFoundException e) {
       if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND)
         print("UI $e");
     }
@@ -171,7 +169,7 @@ class WebService {
   }
 
   Future<AuthenticationDto?> authenticateUser(
-      String passKey, WaterState stateType, bool userInitiated) async {
+      WaterState stateType, bool userInitiated) async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
@@ -186,7 +184,7 @@ class WebService {
         userTools,
         defaults,
         null);
-
+    await authenticationUtils.init();
     try {
       currentTs = TimeUtils.getNowCustomTs();
       remoteDto = await authenticationUtils.requestAuthenticationFromServer(
