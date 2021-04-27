@@ -36,10 +36,30 @@ class DataBaseAccess {
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
     // Initialise Configuration table
+    ConfigurationDto configurationDto;
     ConfigurationDao configurationDao=ConfigurationDao(smd, transaction, defaults);
     await configurationDao.init(initTable: false);
     await configurationDao.insertDefaultValues();
+    try {
+      configurationDto = await configurationDao
+          .getConfigurationDtoByUnique(
+          0, WardenType.USER, ConfigurationNameEnum.WEB_URL, 0);
+    } on SqlException catch(e) {
+      if(e.sqlExceptionEnum==SqlExceptionEnum.ENTRY_NOT_FOUND) {
+        configurationDto = ConfigurationDto.sep(
+            null,
+            0,
+            WardenType.USER,
+            ConfigurationNameEnum.WEB_URL,
+            0,
+            null,
+            '192.168.1.140',
+            defaults);
+        await configurationDao.insertDto(configurationDto);
+      }
+    }
 
+    // Put default values in User table
     UserDao userDao = UserDao(smd, transaction);
     await userDao.init();
     int rowCount = await userDao.getRowCount();
@@ -47,6 +67,8 @@ class DataBaseAccess {
       UserDto userDto = UserDto.sep(1,null,0,WardenType.USER,0,0);
       await userDao.insertDto(userDto);
     }
+
+    // Put default values in User Store table
     UserStoreDao userStoreDao = UserStoreDao(smd, transaction);
     await userStoreDao.init();
     rowCount = await userStoreDao.getRowCount();
