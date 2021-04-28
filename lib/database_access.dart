@@ -53,7 +53,7 @@ class DataBaseAccess {
             ConfigurationNameEnum.WEB_URL,
             0,
             null,
-            '192.168.1.140',
+            '10.0.2.2',
             defaults);
         await configurationDao.insertDto(configurationDto);
       }

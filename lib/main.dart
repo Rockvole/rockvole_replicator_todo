@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/painting.dart';
 import 'package:flutter/material.dart';
 import 'package:pedantic/pedantic.dart';
@@ -63,11 +65,15 @@ class _MyHomePageState extends State<MyHomePage>
     String? passKey = _currentUserDto!.pass_key;
     //await Future.delayed(Duration(seconds: 10), () {});
     bool isNewUser = (_currentUserDto!.id==1);
-    if (!isNewUser && _currentUserDto!.pass_key!=null) {
-      await _webService.sendChanges(null, true);
+    try {
+      if (!isNewUser && _currentUserDto!.pass_key != null) {
+        await _webService.sendChanges(null, true);
+      }
+      await _webService.authenticateUser(WaterState.SERVER_APPROVED, false);
+      await _webService.requestDataFromServer(WaterState.SERVER_APPROVED);
+    } on SocketException catch(e) {
+      print("$e");
     }
-    await _webService.authenticateUser(WaterState.SERVER_APPROVED, false);
-    await _webService.requestDataFromServer(WaterState.SERVER_APPROVED);
     print('stop long op');
     _controller.stop();
     _controller.reset();
