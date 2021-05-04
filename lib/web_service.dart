@@ -30,6 +30,7 @@ class WebService {
     late RemoteDto remoteDto;
 
     WaterLineDao waterLineDao = WaterLineDao.sep(smdSys, transaction);
+    await waterLineDao.init();
     late RestPostNewRowUtils restPostNewRowUtils;
     try {
       restPostNewRowUtils = RestPostNewRowUtils(
@@ -40,6 +41,7 @@ class WebService {
           transaction,
           userTools,
           defaults);
+      await restPostNewRowUtils.init();
     } on SqlException catch (e) {
       if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND)
         print("UI $e");
