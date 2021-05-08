@@ -23,6 +23,73 @@ class WebService {
           WardenType.USER, WardenType.READ_SERVER);
   }
 
+  Future<AuthenticationDto?> authenticateUser(
+      WaterState stateType, bool userInitiated) async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+
+    late RemoteDto remoteDto;
+    late int currentTs;
+    RestGetAuthenticationUtils authenticationUtils = RestGetAuthenticationUtils(
+        warden.localWardenType,
+        warden.remoteWardenType,
+        smd,
+        smdSys,
+        transaction,
+        userTools,
+        defaults,
+        null);
+    await authenticationUtils.init();
+    try {
+      currentTs = TimeUtils.getNowCustomTs();
+      remoteDto = await authenticationUtils.requestAuthenticationFromServer(
+          stateType, C_VERSION);
+      print(remoteDto.toString());
+    } on SqlException catch (e) {
+      if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND ||
+          e.sqlExceptionEnum == SqlExceptionEnum.FAILED_UPDATE ||
+          e.sqlExceptionEnum == SqlExceptionEnum.FAILED_SELECT) print("UI $e");
+    }
+    AuthenticationDto? authenticationDto;
+    switch (remoteDto.water_table_id) {
+      case RemoteStatusDto.C_TABLE_ID:
+        RemoteStatusDto remoteStateDto = remoteDto as RemoteStatusDto;
+        TransmitStatusDto transmitStatusDto = TransmitStatusDto(
+            TransmitStatus.REMOTE_STATE_ERROR,
+            userInitiated: userInitiated);
+        transmitStatusDto.remoteStatus = remoteStateDto.getStatus()!;
+        break;
+      case AuthenticationDto.C_TABLE_ID:
+        authenticationDto = remoteDto as AuthenticationDto;
+        break;
+      default:
+        print("UNKNOWN=" + remoteDto.water_table_id.toString());
+    }
+    await db.close();
+    return authenticationDto;
+  }
+
+  Future<TransmitStatus> downloadRows(WaterState waterState) async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+
+    RemoteStatusDto remoteStatusDto;
+    AbstractWarden warden = ClientWardenFactory.getAbstractWarden(
+        WardenType.USER, WardenType.READ_SERVER);
+    RestGetLatestRowsUtils getRows = RestGetLatestRowsUtils(
+        warden, smd, smdSys, transaction, userTools, defaults);
+    await getRows.init();
+    do {
+      List<RemoteDto> remoteDtoList =
+          await getRows.requestRemoteDtoListFromServer(waterState);
+
+      remoteStatusDto = await getRows.storeRemoteDtoList(remoteDtoList);
+    } while (remoteStatusDto.getStatus() == RemoteStatus.PROCESSED_OK);
+
+    await db.close();
+    return TransmitStatusDto(TransmitStatus.DOWNLOAD_COMPLETE).transmitStatus;
+  }
+
   Future<void> sendChanges(
       TransmitStatusDto? transmitStatusDto, bool sendNow) async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
@@ -49,7 +116,7 @@ class WebService {
     int? sendMins = await userTools.getConfigurationInteger(
         smd, transaction, ConfigurationNameEnum.SEND_CHANGES_DELAY_MINS);
     ClientWarden clientWarden =
-        ClientWarden(warden.localWardenType, waterLineDao);
+    ClientWarden(warden.localWardenType, waterLineDao);
     List<WaterLineDto> waterLineList;
     try {
       waterLineList = await clientWarden.getWaterLineListToSend();
@@ -116,8 +183,8 @@ class WebService {
           if (e1.remoteStatus != null) {
             switch (e1.remoteStatus) {
               case RemoteStatus.EMAIL_ALREADY_EXISTS:
-                //RevertChangesOttoDto revertChangesOttoDto = new RevertChangesOttoDto(remoteDto.getHcDto().getTs());
-                //FoodApplication.getEventBus().post(revertChangesOttoDto);
+              //RevertChangesOttoDto revertChangesOttoDto = new RevertChangesOttoDto(remoteDto.getHcDto().getTs());
+              //FoodApplication.getEventBus().post(revertChangesOttoDto);
                 throw TransmitStatusException(null,
                     cause: "E-Mail Address Already Exists",
                     remoteStatus: e1.remoteStatus,
@@ -170,70 +237,4 @@ class WebService {
     await db.close();
   }
 
-  Future<AuthenticationDto?> authenticateUser(
-      WaterState stateType, bool userInitiated) async {
-    AbstractDatabase db = await DataBaseAccess.getConnection();
-    DbTransaction transaction = await DataBaseAccess.getTransaction();
-
-    late RemoteDto remoteDto;
-    late int currentTs;
-    RestGetAuthenticationUtils authenticationUtils = RestGetAuthenticationUtils(
-        warden.localWardenType,
-        warden.remoteWardenType,
-        smd,
-        smdSys,
-        transaction,
-        userTools,
-        defaults,
-        null);
-    await authenticationUtils.init();
-    try {
-      currentTs = TimeUtils.getNowCustomTs();
-      remoteDto = await authenticationUtils.requestAuthenticationFromServer(
-          stateType, C_VERSION);
-      print(remoteDto.toString());
-    } on SqlException catch (e) {
-      if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND ||
-          e.sqlExceptionEnum == SqlExceptionEnum.FAILED_UPDATE ||
-          e.sqlExceptionEnum == SqlExceptionEnum.FAILED_SELECT) print("UI $e");
-    }
-    AuthenticationDto? authenticationDto;
-    switch (remoteDto.water_table_id) {
-      case RemoteStatusDto.C_TABLE_ID:
-        RemoteStatusDto remoteStateDto = remoteDto as RemoteStatusDto;
-        TransmitStatusDto transmitStatusDto = TransmitStatusDto(
-            TransmitStatus.REMOTE_STATE_ERROR,
-            userInitiated: userInitiated);
-        transmitStatusDto.remoteStatus = remoteStateDto.getStatus()!;
-        break;
-      case AuthenticationDto.C_TABLE_ID:
-        authenticationDto = remoteDto as AuthenticationDto;
-        break;
-      default:
-        print("UNKNOWN=" + remoteDto.water_table_id.toString());
-    }
-    await db.close();
-    return authenticationDto;
-  }
-
-  Future<TransmitStatus> requestDataFromServer(WaterState waterState) async {
-    AbstractDatabase db = await DataBaseAccess.getConnection();
-    DbTransaction transaction = await DataBaseAccess.getTransaction();
-
-    RemoteStatusDto remoteStatusDto;
-    AbstractWarden warden = ClientWardenFactory.getAbstractWarden(
-        WardenType.USER, WardenType.READ_SERVER);
-    RestGetLatestRowsUtils getRows = RestGetLatestRowsUtils(
-        warden, smd, smdSys, transaction, userTools, defaults);
-    await getRows.init();
-    do {
-      List<RemoteDto> remoteDtoList =
-          await getRows.requestRemoteDtoListFromServer(waterState);
-
-      remoteStatusDto = await getRows.storeRemoteDtoList(remoteDtoList);
-    } while (remoteStatusDto.getStatus() == RemoteStatus.PROCESSED_OK);
-
-    await db.close();
-    return TransmitStatusDto(TransmitStatus.DOWNLOAD_COMPLETE).transmitStatus;
-  }
 }

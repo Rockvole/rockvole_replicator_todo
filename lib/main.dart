@@ -70,7 +70,7 @@ class _MyHomePageState extends State<MyHomePage>
         await _webService.sendChanges(null, true);
       }
       await _webService.authenticateUser(WaterState.SERVER_APPROVED, false);
-      await _webService.requestDataFromServer(WaterState.SERVER_APPROVED);
+      await _webService.downloadRows(WaterState.SERVER_APPROVED);
     } on SocketException catch(e) {
       print("$e");
     }
