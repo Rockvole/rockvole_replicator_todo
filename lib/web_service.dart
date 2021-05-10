@@ -3,6 +3,7 @@ import 'package:rockvole_db/rockvole_data.dart';
 import 'package:rockvole_db/rockvole_db.dart';
 import 'package:rockvole_db/rockvole_transactions.dart';
 import 'package:rockvole_db/rockvole_web_services.dart';
+import 'package:rockvole_replicator_todo/dao/TaskMixin.dart';
 
 import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 
@@ -14,16 +15,25 @@ class WebService {
   ConfigurationNameDefaults defaults;
   late AbstractWarden warden;
   EventBus eventBus;
-  TransmitStatusDto transmitStatusDto=TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
+  TransmitStatusDto transmitStatusDto =
+      TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
+  bool taskTableReceived = false;
 
-  WebService(this.smd, this.smdSys, this.userTools, this.defaults, this.eventBus) {
-    bool isAdmin = false;
-    if (isAdmin)
+  WebService(
+      this.smd, this.smdSys, this.userTools, this.defaults, this.eventBus) {
+    taskTableReceived = false;
+  }
+
+  Future<void> init() async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+    if (await userTools.isAdmin(smd, transaction))
       warden = ClientWardenFactory.getAbstractWarden(
           WardenType.ADMIN, WardenType.WRITE_SERVER);
     else
       warden = ClientWardenFactory.getAbstractWarden(
           WardenType.USER, WardenType.READ_SERVER);
+    await db.close();
   }
 
   Future<AuthenticationDto?> authenticateUser(
@@ -72,30 +82,50 @@ class WebService {
     return authenticationDto;
   }
 
-  Future<TransmitStatus> downloadRows(WaterState waterState, int totalCount) async {
-    if(totalCount==0) {
-      transmitStatusDto=TransmitStatusDto(TransmitStatus.NO_NEW_RECORDS_FOUND);
+  Future<TransmitStatus> downloadRows(
+      WaterState waterState, int totalCount) async {
+    if (totalCount == 0) {
+      transmitStatusDto =
+          TransmitStatusDto(TransmitStatus.NO_NEW_RECORDS_FOUND);
       eventBus.fire(transmitStatusDto);
     } else {
+      int remainingCount = totalCount;
+      int downloadedCount = 0;
+      transmitStatusDto = TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
+      eventBus.fire(transmitStatusDto);
       AbstractDatabase db = await DataBaseAccess.getConnection();
       DbTransaction transaction = await DataBaseAccess.getTransaction();
 
-      RemoteStatusDto remoteStatusDto;
-      AbstractWarden warden = ClientWardenFactory.getAbstractWarden(
-          WardenType.USER, WardenType.READ_SERVER);
       RestGetLatestRowsUtils getRows = RestGetLatestRowsUtils(
           warden, smd, smdSys, transaction, userTools, defaults);
       await getRows.init();
+      RemoteStatusDto remoteStatusDto;
       do {
+        transmitStatusDto = TransmitStatusDto(TransmitStatus.RECORDS_REMAINING,
+            message: remainingCount.toString() + " records to download",
+            completedRecords: downloadedCount,
+            totalRecords: totalCount,
+            userInitiated: false);
+        eventBus.fire(transmitStatusDto);
         List<RemoteDto> remoteDtoList =
-        await getRows.requestRemoteDtoListFromServer(waterState);
+            await getRows.requestRemoteDtoListFromServer(waterState);
+        if (getRows.wasTableReceived(TaskMixin.C_TABLE_ID)) {
+          taskTableReceived = true;
+        }
 
         remoteStatusDto = await getRows.storeRemoteDtoList(remoteDtoList);
+        remainingCount = remainingCount - remoteDtoList.length;
+        downloadedCount = downloadedCount + remoteDtoList.length;
       } while (remoteStatusDto.getStatus() == RemoteStatus.PROCESSED_OK);
-
+      transmitStatusDto = TransmitStatusDto(TransmitStatus.DOWNLOAD_COMPLETE,
+          message: totalCount.toString() + " records downloaded",
+          completedRecords: totalCount,
+          totalRecords: totalCount,
+          userInitiated: false);
+      eventBus.fire(transmitStatusDto);
       await db.close();
     }
-    return TransmitStatusDto(TransmitStatus.DOWNLOAD_COMPLETE).transmitStatus;
+    return transmitStatusDto.transmitStatus;
   }
 
   Future<void> sendChanges(
@@ -124,7 +154,7 @@ class WebService {
     int? sendMins = await userTools.getConfigurationInteger(
         smd, transaction, ConfigurationNameEnum.SEND_CHANGES_DELAY_MINS);
     ClientWarden clientWarden =
-    ClientWarden(warden.localWardenType, waterLineDao);
+        ClientWarden(warden.localWardenType, waterLineDao);
     List<WaterLineDto> waterLineList;
     try {
       waterLineList = await clientWarden.getWaterLineListToSend();
@@ -191,8 +221,8 @@ class WebService {
           if (e1.remoteStatus != null) {
             switch (e1.remoteStatus) {
               case RemoteStatus.EMAIL_ALREADY_EXISTS:
-              //RevertChangesOttoDto revertChangesOttoDto = new RevertChangesOttoDto(remoteDto.getHcDto().getTs());
-              //FoodApplication.getEventBus().post(revertChangesOttoDto);
+                //RevertChangesOttoDto revertChangesOttoDto = new RevertChangesOttoDto(remoteDto.getHcDto().getTs());
+                //FoodApplication.getEventBus().post(revertChangesOttoDto);
                 throw TransmitStatusException(null,
                     cause: "E-Mail Address Already Exists",
                     remoteStatus: e1.remoteStatus,
@@ -244,5 +274,4 @@ class WebService {
     }
     await db.close();
   }
-
 }

@@ -53,11 +53,14 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> initDb() async {
     _dbAccess = DataBaseAccess();
-    _defaults=ConfigurationNameDefaults();
+    _defaults = ConfigurationNameDefaults();
     _taskNames = await _dbAccess.setupDb(_defaults);
-    _userTools=UserTools();
-    _currentUserDto = await _dbAccess.getCurrentUserDto(_dbAccess.smd, _userTools);
-    _webService=WebService(_dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults, bus.eventBus);
+    _userTools = UserTools();
+    _currentUserDto =
+        await _dbAccess.getCurrentUserDto(_dbAccess.smd, _userTools);
+    _webService = WebService(
+        _dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults, bus.eventBus);
+    await _webService.init();
   }
 
   Future<bool> syncDatabaseFull() async {
@@ -65,14 +68,25 @@ class _MyHomePageState extends State<MyHomePage>
     unawaited(_controller.forward());
     String? passKey = _currentUserDto!.pass_key;
     //await Future.delayed(Duration(seconds: 10), () {});
-    bool isNewUser = (_currentUserDto!.id==1);
+    bool isNewUser = (_currentUserDto!.id == 1);
     try {
       if (!isNewUser && _currentUserDto!.pass_key != null) {
         await _webService.sendChanges(null, true);
       }
-      await _webService.authenticateUser(WaterState.SERVER_APPROVED, false);
-      await _webService.downloadRows(WaterState.SERVER_APPROVED,0);
-    } on SocketException catch(e) {
+      AuthenticationDto? authenticationDto =
+          await _webService.authenticateUser(WaterState.SERVER_APPROVED, true);
+      if (authenticationDto != null) {
+        TransmitStatus transmitStatus = await _webService.downloadRows(
+            WaterState.SERVER_APPROVED, authenticationDto.newRecords);
+      }
+      if (_currentUserDto!.warden == WardenType.ADMIN) {
+        authenticationDto =
+            await _webService.authenticateUser(WaterState.SERVER_PENDING, true);
+        if (authenticationDto != null)
+          await _webService.downloadRows(
+              WaterState.SERVER_APPROVED, authenticationDto.newRecords);
+      }
+    } on SocketException catch (e) {
       print("$e");
     }
     print('stop long op');
@@ -84,13 +98,14 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-    bus=Bus();
+    bus = Bus();
     bus.setupBus();
     initDb();
 
     _controller =
         AnimationController(vsync: this, duration: Duration(seconds: 200));
-    rotateAnimation = Tween<double>(begin: 0.0, end: 360.0).animate(_controller);
+    rotateAnimation =
+        Tween<double>(begin: 0.0, end: 360.0).animate(_controller);
   }
 
   @override
