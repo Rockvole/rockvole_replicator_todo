@@ -6,7 +6,7 @@ import 'package:pedantic/pedantic.dart';
 import 'package:rockvole_db/rockvole_transactions.dart';
 import 'package:rockvole_db/rockvole_web_services.dart';
 
-import 'database_access.dart';
+import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 import 'refresh_service.dart';
 import 'web_service.dart';
 
@@ -49,6 +49,7 @@ class _MyHomePageState extends State<MyHomePage>
   UserDto? _currentUserDto;
   String? _autoCompleteValue;
   List<String> _taskNames = [];
+  late Bus bus;
 
   Future<void> initDb() async {
     _dbAccess = DataBaseAccess();
@@ -56,7 +57,7 @@ class _MyHomePageState extends State<MyHomePage>
     _taskNames = await _dbAccess.setupDb(_defaults);
     _userTools=UserTools();
     _currentUserDto = await _dbAccess.getCurrentUserDto(_dbAccess.smd, _userTools);
-    _webService=WebService(_dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults);
+    _webService=WebService(_dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults, bus.eventBus);
   }
 
   Future<bool> syncDatabaseFull() async {
@@ -70,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage>
         await _webService.sendChanges(null, true);
       }
       await _webService.authenticateUser(WaterState.SERVER_APPROVED, false);
-      await _webService.downloadRows(WaterState.SERVER_APPROVED);
+      await _webService.downloadRows(WaterState.SERVER_APPROVED,0);
     } on SocketException catch(e) {
       print("$e");
     }
@@ -83,6 +84,8 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
+    bus=Bus();
+    bus.setupBus();
     initDb();
 
     _controller =

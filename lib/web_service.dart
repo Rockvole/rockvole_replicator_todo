@@ -1,3 +1,4 @@
+import 'package:event_bus/event_bus.dart';
 import 'package:rockvole_db/rockvole_data.dart';
 import 'package:rockvole_db/rockvole_db.dart';
 import 'package:rockvole_db/rockvole_transactions.dart';
@@ -12,8 +13,10 @@ class WebService {
   UserTools userTools;
   ConfigurationNameDefaults defaults;
   late AbstractWarden warden;
+  EventBus eventBus;
+  TransmitStatusDto transmitStatusDto=TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
 
-  WebService(this.smd, this.smdSys, this.userTools, this.defaults) {
+  WebService(this.smd, this.smdSys, this.userTools, this.defaults, this.eventBus) {
     bool isAdmin = false;
     if (isAdmin)
       warden = ClientWardenFactory.getAbstractWarden(
@@ -69,24 +72,29 @@ class WebService {
     return authenticationDto;
   }
 
-  Future<TransmitStatus> downloadRows(WaterState waterState) async {
-    AbstractDatabase db = await DataBaseAccess.getConnection();
-    DbTransaction transaction = await DataBaseAccess.getTransaction();
+  Future<TransmitStatus> downloadRows(WaterState waterState, int totalCount) async {
+    if(totalCount==0) {
+      transmitStatusDto=TransmitStatusDto(TransmitStatus.NO_NEW_RECORDS_FOUND);
+      eventBus.fire(transmitStatusDto);
+    } else {
+      AbstractDatabase db = await DataBaseAccess.getConnection();
+      DbTransaction transaction = await DataBaseAccess.getTransaction();
 
-    RemoteStatusDto remoteStatusDto;
-    AbstractWarden warden = ClientWardenFactory.getAbstractWarden(
-        WardenType.USER, WardenType.READ_SERVER);
-    RestGetLatestRowsUtils getRows = RestGetLatestRowsUtils(
-        warden, smd, smdSys, transaction, userTools, defaults);
-    await getRows.init();
-    do {
-      List<RemoteDto> remoteDtoList =
-          await getRows.requestRemoteDtoListFromServer(waterState);
+      RemoteStatusDto remoteStatusDto;
+      AbstractWarden warden = ClientWardenFactory.getAbstractWarden(
+          WardenType.USER, WardenType.READ_SERVER);
+      RestGetLatestRowsUtils getRows = RestGetLatestRowsUtils(
+          warden, smd, smdSys, transaction, userTools, defaults);
+      await getRows.init();
+      do {
+        List<RemoteDto> remoteDtoList =
+        await getRows.requestRemoteDtoListFromServer(waterState);
 
-      remoteStatusDto = await getRows.storeRemoteDtoList(remoteDtoList);
-    } while (remoteStatusDto.getStatus() == RemoteStatus.PROCESSED_OK);
+        remoteStatusDto = await getRows.storeRemoteDtoList(remoteDtoList);
+      } while (remoteStatusDto.getStatus() == RemoteStatus.PROCESSED_OK);
 
-    await db.close();
+      await db.close();
+    }
     return TransmitStatusDto(TransmitStatus.DOWNLOAD_COMPLETE).transmitStatus;
   }
 
