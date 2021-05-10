@@ -86,6 +86,11 @@ class _MyHomePageState extends State<MyHomePage>
           await _webService.downloadRows(
               WaterState.SERVER_APPROVED, authenticationDto.newRecords);
       }
+      if(_webService.taskTableReceived) {
+        _taskNames = await _dbAccess.setupDb(_defaults);
+        setState(() {}); // Refresh screen
+        blank();
+      }
     } on SocketException catch (e) {
       print("$e");
     }
