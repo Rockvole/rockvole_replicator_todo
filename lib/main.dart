@@ -74,23 +74,46 @@ class _MyHomePageState extends State<MyHomePage>
         await _webService.sendChanges(null, true);
       }
       AuthenticationDto? authenticationDto =
-          await _webService.authenticateUser(WaterState.SERVER_APPROVED, true);
+      await _webService.authenticateUser(WaterState.SERVER_APPROVED, true);
       if (authenticationDto != null) {
-        TransmitStatus transmitStatus = await _webService.downloadRows(
+        TransmitStatus? transmitStatus = await _webService.downloadRows(
             WaterState.SERVER_APPROVED, authenticationDto.newRecords);
       }
       if (_currentUserDto!.warden == WardenType.ADMIN) {
         authenticationDto =
-            await _webService.authenticateUser(WaterState.SERVER_PENDING, true);
+        await _webService.authenticateUser(WaterState.SERVER_PENDING, true);
         if (authenticationDto != null)
           await _webService.downloadRows(
               WaterState.SERVER_APPROVED, authenticationDto.newRecords);
       }
-      if(_webService.taskTableReceived) {
+      if (_webService.taskTableReceived) {
         _taskNames = await _dbAccess.setupDb(_defaults);
         setState(() {}); // Refresh screen
         blank();
       }
+    } on TransmitStatusException catch(e) {
+      print(e.cause);
+      String? message;
+      switch(e.transmitStatus) {
+        case TransmitStatus.REMOTE_STATE_ERROR:
+          message = e.cause;
+          break;
+        case TransmitStatus.SOCKET_TIMEOUT:
+          message = e.sourceName;
+          break;
+        case TransmitStatus.USER_UPDATED:
+          //AlarmReceiver.correctAlarmRange(this, false, application);
+          break;
+        default:
+      }
+      TransmitStatusDto transmitStatusDto = TransmitStatusDto(e.transmitStatus, message:message, userInitiated: true);
+      if(e.remoteStatus!=null) {
+        transmitStatusDto.remoteStatus=e.remoteStatus;
+        if(e.remoteStatus== RemoteStatus.CUSTOM_ERROR) {
+          transmitStatusDto.message=message;
+        }
+      }
+      bus.eventBus.fire(transmitStatusDto);
     } on SocketException catch (e) {
       print("$e");
     }

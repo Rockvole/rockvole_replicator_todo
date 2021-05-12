@@ -82,7 +82,7 @@ class WebService {
     return authenticationDto;
   }
 
-  Future<TransmitStatus> downloadRows(
+  Future<TransmitStatus?> downloadRows(
       WaterState waterState, int totalCount) async {
     if (totalCount == 0) {
       transmitStatusDto =
