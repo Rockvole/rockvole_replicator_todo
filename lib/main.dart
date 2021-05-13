@@ -50,8 +50,10 @@ class _MyHomePageState extends State<MyHomePage>
   String? _autoCompleteValue;
   List<String> _taskNames = [];
   late Bus bus;
+  late Application _application;
 
   Future<void> initDb() async {
+    _application = Application();
     _dbAccess = DataBaseAccess();
     _defaults = ConfigurationNameDefaults();
     _taskNames = await _dbAccess.setupDb(_defaults);
@@ -126,8 +128,8 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
-    bus = Bus();
-    bus.setupBus();
+    bus = Bus(_application);
+    bus.displayServerStatus(context);
     initDb();
 
     _controller =
