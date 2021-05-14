@@ -155,6 +155,7 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext context) {
     String _autoCompleteSelection;
+    var _controller = TextEditingController();
     RawAutocomplete rawAutocomplete = RawAutocomplete(
         textEditingController: _textEditingController,
         focusNode: _focusNode,
@@ -249,10 +250,16 @@ class _MyHomePageState extends State<MyHomePage>
               children: [
                 Expanded(
                     child: TextField(
+                  controller: _controller,
                   decoration: InputDecoration(
-                      border: InputBorder.none,
-                      labelText: 'E-Mail',
-                      hintText: 'Enter Your E-Mail address'),
+                    border: InputBorder.none,
+                    labelText: 'E-Mail',
+                    hintText: 'Enter Your E-Mail address',
+                    suffixIcon: IconButton(
+                      onPressed: () => _controller.clear(),
+                      icon: Icon(Icons.clear),
+                    ),
+                  ),
                 )),
                 Padding(
                     padding: EdgeInsets.all(10.0),
