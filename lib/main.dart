@@ -128,9 +128,9 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
+    initDb();
     bus = Bus(_application);
     bus.displayServerStatus(context);
-    initDb();
 
     _controller =
         AnimationController(vsync: this, duration: Duration(seconds: 200));

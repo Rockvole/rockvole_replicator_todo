@@ -4,7 +4,10 @@ import 'package:event_bus/event_bus.dart';
 import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 import 'package:rockvole_db/rockvole_web_services.dart';
 
+enum RefreshType { NONE, DOWNLOADING, UPLOADING, UPDATING }
+
 class Bus {
+  bool dialogShowing=false;
   Application application;
   EventBus eventBus = EventBus();
 
@@ -13,29 +16,26 @@ class Bus {
   displayServerStatus(BuildContext context) {
     eventBus.on<TransmitStatusDto>().listen((TransmitStatusDto transmitStatusDto) {
       print("EVENT BUS: "+transmitStatusDto.transmitStatus.toString());
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Adding something"),
-      ));
 
       String? message=transmitStatusDto.message;
       switch(transmitStatusDto.transmitStatus) {
         case TransmitStatus.DOWNLOAD_STARTED:
           application.serverStatus=ServerStatus.TRANSMITTING;
-          //showRefreshDialog(RefreshDialogFragment.RefreshType.DOWNLOADING, transmitStatusDto.getMessage(), transmitStatusDto.isDeterminate());
+          showRefreshDialog(RefreshType.DOWNLOADING, transmitStatusDto.message, transmitStatusDto.isDeterminate, context);
           break;
         case TransmitStatus.DOWNLOAD_STOPPED:
           application.serverStatus=ServerStatus.USER_STOPPED;
-          //showRefreshDialog(RefreshDialogFragment.RefreshType.NONE, transmitStatusDto.getMessage(), transmitStatusDto.isDeterminate());
+          showRefreshDialog(RefreshType.NONE, transmitStatusDto.message, transmitStatusDto.isDeterminate, context);
           //supportInvalidateOptionsMenu();
           break;
         case TransmitStatus.UPLOAD_STARTED:
           application.serverStatus=ServerStatus.TRANSMITTING;
-          //showRefreshDialog(RefreshDialogFragment.RefreshType.UPLOADING, transmitStatusDto.getMessage(), transmitStatusDto.isDeterminate());
+          showRefreshDialog(RefreshType.UPLOADING, transmitStatusDto.message, transmitStatusDto.isDeterminate, context);
           break;
         case TransmitStatus.UPDATE_STARTED:
           message=null;
           application.serverStatus=ServerStatus.TRANSMITTING;
-          //showRefreshDialog(RefreshDialogFragment.RefreshType.UPDATING, transmitStatusDto.getMessage(), transmitStatusDto.isDeterminate());
+          showRefreshDialog(RefreshType.UPDATING, transmitStatusDto.message, transmitStatusDto.isDeterminate, context);
           break;
         case TransmitStatus.RECORDS_REMAINING:
           break;
@@ -44,7 +44,7 @@ class Bus {
           break;
         case TransmitStatus.WIFI_NOT_FOUND:
           application.serverStatus=ServerStatus.ERROR;
-          //showRefreshDialog(RefreshDialogFragment.RefreshType.NONE, transmitStatusDto.getMessage(), transmitStatusDto.isDeterminate());
+          showRefreshDialog(RefreshType.NONE, transmitStatusDto.message, transmitStatusDto.isDeterminate, context);
           //startPreferences();
           //supportInvalidateOptionsMenu();
           break;
@@ -70,13 +70,13 @@ class Bus {
             }
           }
           message=transmitStatusDto.message;
-          //showRefreshDialog(RefreshDialogFragment.RefreshType.NONE, transmitStatusDto.getMessage(), transmitStatusDto.isDeterminate());
+          showRefreshDialog(RefreshType.NONE, transmitStatusDto.message, transmitStatusDto.isDeterminate, context);
           //supportInvalidateOptionsMenu();
           break;
         case TransmitStatus.SOCKET_TIMEOUT:
           application.serverStatus=ServerStatus.ERROR;
           message=transmitStatusDto.message.toString()+" "+TransmitStatusDto.getDefaultMessage(transmitStatusDto.transmitStatus).toString();
-          //showRefreshDialog(RefreshDialogFragment.RefreshType.NONE, transmitStatusDto.getMessage(), transmitStatusDto.isDeterminate());
+          showRefreshDialog(RefreshType.NONE, transmitStatusDto.message, transmitStatusDto.isDeterminate, context);
           //supportInvalidateOptionsMenu();
           break;
         case TransmitStatus.UPDATE_COMPLETE:
@@ -90,9 +90,39 @@ class Bus {
         case TransmitStatus.RESOURCE_NOT_FOUND:
         case TransmitStatus.UPLOAD_COMPLETE:
           application.serverStatus=ServerStatus.COMPLETE;
-          //showRefreshDialog(RefreshDialogFragment.RefreshType.NONE, transmitStatusDto.getMessage(), transmitStatusDto.isDeterminate());
+          showRefreshDialog(RefreshType.NONE, transmitStatusDto.message, transmitStatusDto.isDeterminate, context);
           //supportInvalidateOptionsMenu();
       }
+      if(message!=null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(message),
+        ));
+      }
     });
+  }
+
+  void showRefreshDialog(RefreshType refreshType, String? startMessage, bool determinate, BuildContext context) {
+    if(dialogShowing) {
+      Navigator.pop(context);
+      dialogShowing = false;
+    }
+    if(refreshType!= RefreshType.NONE) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext buildContext) {
+          context = buildContext;
+          return Dialog(
+            child: new Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                new CircularProgressIndicator(),
+                new Text("Loading"),
+              ],
+            ),
+          );
+        },
+      );
+    }
   }
 }
