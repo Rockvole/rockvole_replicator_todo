@@ -22,7 +22,7 @@ class DataBaseAccess {
 
   Future<void> getYaml() async {
     String yamlString =
-    await rootBundle.loadString('ancillary/assets/todo_schema.yaml');
+        await rootBundle.loadString('ancillary/assets/todo_schema.yaml');
     YamlMap yaml = loadYaml(yamlString);
     smd = SchemaMetaData.yaml(yaml);
     smd = SchemaMetaDataTools.createSchemaMetaData(smd);
@@ -37,44 +37,19 @@ class DataBaseAccess {
 
     // Initialise Configuration table
     ConfigurationDto configurationDto;
-    ConfigurationDao configurationDao=ConfigurationDao(smd, transaction, defaults);
+    ConfigurationDao configurationDao =
+        ConfigurationDao(smd, transaction, defaults);
     await configurationDao.init(initTable: false);
     await configurationDao.insertDefaultValues();
     try {
-      configurationDto = await configurationDao
-          .getConfigurationDtoByUnique(
+      configurationDto = await configurationDao.getConfigurationDtoByUnique(
           0, WardenType.USER, ConfigurationNameEnum.WEB_URL, 0);
-    } on SqlException catch(e) {
-      if(e.sqlExceptionEnum==SqlExceptionEnum.ENTRY_NOT_FOUND) {
-        configurationDto = ConfigurationDto.sep(
-            null,
-            0,
-            WardenType.USER,
-            ConfigurationNameEnum.WEB_URL,
-            0,
-            null,
-            '10.0.2.2',
-            defaults);
+    } on SqlException catch (e) {
+      if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND) {
+        configurationDto = ConfigurationDto.sep(null, 0, WardenType.USER,
+            ConfigurationNameEnum.WEB_URL, 0, null, '10.0.2.2', defaults);
         await configurationDao.insertDto(configurationDto);
       }
-    }
-
-    // Put default values in User table
-    UserDao userDao = UserDao(smd, transaction);
-    await userDao.init();
-    int rowCount = await userDao.getRowCount();
-    if(rowCount==0) {
-      UserDto userDto = UserDto.sep(1,null,0,WardenType.USER,0,0);
-      await userDao.insertDto(userDto);
-    }
-
-    // Put default values in User Store table
-    UserStoreDao userStoreDao = UserStoreDao(smd, transaction);
-    await userStoreDao.init();
-    rowCount = await userStoreDao.getRowCount();
-    if(rowCount==0) {
-      UserStoreDto userStoreDto = UserStoreDto.sep(1,'user@user.com',0,'User','User',0,0,0);
-      await userStoreDao.insertDto(userStoreDto);
     }
     // Get list of tasks
     _taskDao = TaskDao(smd, transaction);
@@ -86,8 +61,7 @@ class DataBaseAccess {
           taskNames.add(taskDto.task_description!);
         });
         taskNames.sort();
-      } on SqlException {
-      }
+      } on SqlException {}
     } else {
       await _taskDao.createTable();
     }
@@ -95,20 +69,44 @@ class DataBaseAccess {
     return taskNames;
   }
 
-  Future<List<String>> addTask(String task_description, bool task_complete, List<String> taskNames) async {
+  Future<void> storeUser(String email) async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
-    AbstractWarden abstractWarden =
-    ClientWardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
+    // Put default values in User table
+    UserDao userDao = UserDao(smd, transaction);
+    await userDao.init();
+
+    UserDto userDto = UserDto.sep(null, null, 0, WardenType.USER, 0, 0);
+    int? id = await userDao.addDto(userDto, _localWardenType);
+
+    // Put default values in User Store table
+    UserStoreDao userStoreDao = UserStoreDao(smd, transaction);
+    await userStoreDao.init();
+
+    UserStoreDto userStoreDto =
+        UserStoreDto.sep(id, email, 0, 'User', 'User', 0, 0, 0);
+    await userStoreDao.insertDto(userStoreDto);
+
+    await db.close();
+  }
+
+  Future<List<String>> addTask(String task_description, bool task_complete,
+      List<String> taskNames) async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+
+    AbstractWarden abstractWarden = ClientWardenFactory.getAbstractWarden(
+        _localWardenType, _remoteWardenType);
     await abstractWarden.init(TaskMixin.C_TABLE_ID, smd, smdSys, transaction);
     HcDto hcDto = HcDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
         null, TaskMixin.C_TABLE_ID);
     TaskHcDto taskHcDto =
-    TaskHcDto.sep(null, task_description, task_complete, hcDto);
+        TaskHcDto.sep(null, task_description, task_complete, hcDto);
     AbstractTableTransactions tableTransactions =
-    TableTransactions.sep(taskHcDto, TaskMixin.C_TABLE_ID);
-    await tableTransactions.init(_localWardenType, _remoteWardenType, smd, smdSys, transaction);
+        TableTransactions.sep(taskHcDto, TaskMixin.C_TABLE_ID);
+    await tableTransactions.init(
+        _localWardenType, _remoteWardenType, smd, smdSys, transaction);
     abstractWarden.initialize(tableTransactions);
     try {
       await abstractWarden.write();
@@ -121,10 +119,12 @@ class DataBaseAccess {
     return taskNames;
   }
 
-  Future<UserDto?> getCurrentUserDto(SchemaMetaData smd, UserTools userTools) async {
+  Future<UserDto?> getCurrentUserDto(
+      SchemaMetaData smd, UserTools userTools) async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
-    UserDto? currentUserDto = await userTools.getCurrentUserDto(smd, transaction);
+    UserDto? currentUserDto =
+        await userTools.getCurrentUserDto(smd, transaction);
     await db.close();
     return currentUserDto;
   }
@@ -141,5 +141,4 @@ class DataBaseAccess {
         'task_data', (await getDatabasesPath()).toString());
     return transaction;
   }
-
 }

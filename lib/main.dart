@@ -264,8 +264,8 @@ class _MyHomePageState extends State<MyHomePage>
                 Padding(
                     padding: EdgeInsets.all(10.0),
                     child: OutlinedButton(
-                        onPressed: () {
-                          print('hi');
+                        onPressed: () async {
+                          await _dbAccess.storeUser(_controller.text);
                         },
                         child: Text('Save')))
               ],
