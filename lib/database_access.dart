@@ -17,9 +17,12 @@ class DataBaseAccess {
   late SchemaMetaData smdSys;
   late List<TaskDto> _taskList;
   late TaskDao _taskDao;
+  late UserTools _userTools;
   WardenType _localWardenType = WardenType.USER;
   WardenType _remoteWardenType = WardenType.USER;
 
+  DataBaseAccess(this._userTools);
+  
   Future<void> getYaml() async {
     String yamlString =
         await rootBundle.loadString('ancillary/assets/todo_schema.yaml');
@@ -78,16 +81,18 @@ class DataBaseAccess {
     await userDao.init();
 
     UserDto userDto = UserDto.sep(null, null, 0, WardenType.USER, 0, 0);
-    int? id = await userDao.addDto(userDto, _localWardenType);
+    int? cuId = await userDao.addDto(userDto, _localWardenType);
 
     // Put default values in User Store table
     UserStoreDao userStoreDao = UserStoreDao(smd, transaction);
     await userStoreDao.init();
 
     UserStoreDto userStoreDto =
-        UserStoreDto.sep(id, email, 0, 'User', 'User', 0, 0, 0);
+        UserStoreDto.sep(cuId, email, 0, 'User', 'User', 0, 0, 0);
     await userStoreDao.insertDto(userStoreDto);
 
+    await _userTools.setCurrentUserId(smd, transaction, cuId!);
+    
     await db.close();
   }
 
