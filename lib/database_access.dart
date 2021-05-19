@@ -22,7 +22,7 @@ class DataBaseAccess {
   WardenType _remoteWardenType = WardenType.USER;
 
   DataBaseAccess(this._userTools);
-  
+
   Future<void> getYaml() async {
     String yamlString =
         await rootBundle.loadString('ancillary/assets/todo_schema.yaml');
@@ -92,7 +92,7 @@ class DataBaseAccess {
     await userStoreDao.insertDto(userStoreDto);
 
     await _userTools.setCurrentUserId(smd, transaction, cuId!);
-    
+
     await db.close();
   }
 
@@ -132,6 +132,16 @@ class DataBaseAccess {
         await userTools.getCurrentUserDto(smd, transaction);
     await db.close();
     return currentUserDto;
+  }
+
+  Future<UserStoreDto?> getCurrentUserStoreDto(
+      SchemaMetaData smd, UserTools userTools) async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+    UserStoreDto? currentUserStoreDto =
+        await userTools.getCurrentUserStoreDto(smd, transaction);
+    await db.close();
+    return currentUserStoreDto;
   }
 
   static Future<AbstractDatabase> getConnection() async {

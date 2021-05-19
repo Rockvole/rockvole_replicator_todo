@@ -38,6 +38,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage>
     with SingleTickerProviderStateMixin {
   TextEditingController _textEditingController = TextEditingController();
+  late TextEditingController _emailTextController = TextEditingController();
   late AnimationController _controller;
   late Animation colorAnimation;
   late Animation rotateAnimation;
@@ -47,6 +48,7 @@ class _MyHomePageState extends State<MyHomePage>
   late DataBaseAccess _dbAccess;
   late WebService _webService;
   UserDto? _currentUserDto;
+  UserStoreDto? _currentUserStoreDto;
   String? _autoCompleteValue;
   List<String> _taskNames = [];
   late Bus bus;
@@ -60,9 +62,12 @@ class _MyHomePageState extends State<MyHomePage>
     _taskNames = await _dbAccess.setupDb(_defaults);
     _currentUserDto =
         await _dbAccess.getCurrentUserDto(_dbAccess.smd, _userTools);
+    _currentUserStoreDto =
+        await _dbAccess.getCurrentUserStoreDto(_dbAccess.smd, _userTools);
     _webService = WebService(
         _dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults, bus.eventBus);
     await _webService.init();
+    _emailTextController.text = _currentUserStoreDto!.email.toString();
   }
 
   Future<bool> syncDatabaseFull() async {
@@ -155,7 +160,6 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   Widget build(BuildContext context) {
     String _autoCompleteSelection;
-    var _controller = TextEditingController();
     RawAutocomplete rawAutocomplete = RawAutocomplete(
         textEditingController: _textEditingController,
         focusNode: _focusNode,
@@ -173,13 +177,13 @@ class _MyHomePageState extends State<MyHomePage>
           });
         },
         fieldViewBuilder: (BuildContext context,
-            TextEditingController textEditingController,
+            TextEditingController taskTextController,
             FocusNode focusNode,
             VoidCallback onFieldSubmitted) {
           return TextFormField(
-            controller: textEditingController,
+            controller: taskTextController,
             decoration: InputDecoration(
-                hintText: 'This is an RawAutocomplete 2.0',
+                hintText: 'Enter Task Name',
                 suffixIcon: IconButton(
                   onPressed: () => blank(),
                   icon: Icon(Icons.clear),
@@ -250,13 +254,13 @@ class _MyHomePageState extends State<MyHomePage>
               children: [
                 Expanded(
                     child: TextField(
-                  controller: _controller,
+                  controller: _emailTextController,
                   decoration: InputDecoration(
                     border: InputBorder.none,
                     labelText: 'E-Mail',
                     hintText: 'Enter Your E-Mail address',
                     suffixIcon: IconButton(
-                      onPressed: () => _controller.clear(),
+                      onPressed: () => _emailTextController.clear(),
                       icon: Icon(Icons.clear),
                     ),
                   ),
@@ -265,7 +269,7 @@ class _MyHomePageState extends State<MyHomePage>
                     padding: EdgeInsets.all(10.0),
                     child: OutlinedButton(
                         onPressed: () async {
-                          await _dbAccess.storeUser(_controller.text);
+                          await _dbAccess.storeUser(_emailTextController.text);
                         },
                         child: Text('Save')))
               ],
