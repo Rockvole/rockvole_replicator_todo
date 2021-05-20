@@ -61,9 +61,6 @@ class _MyHomePageState extends State<MyHomePage>
     _defaults = ConfigurationNameDefaults();
     _taskNames = await _dbAccess.setupDb(_defaults);
     await fetchUserData(true);
-    _webService = WebService(
-        _dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults, bus.eventBus);
-    await _webService.init();
   }
 
   Future<void> fetchUserData(bool updateEmail) async {
@@ -77,6 +74,9 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<bool> syncDatabaseFull() async {
     print('start long op');
+    _webService = WebService(
+        _dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults, bus.eventBus);
+    await _webService.init();
     unawaited(_controller.forward());
     await fetchUserData(false);
     String? passKey = _currentUserDto!.pass_key;
