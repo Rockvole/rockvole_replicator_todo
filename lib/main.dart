@@ -60,19 +60,25 @@ class _MyHomePageState extends State<MyHomePage>
     _dbAccess = DataBaseAccess(_userTools);
     _defaults = ConfigurationNameDefaults();
     _taskNames = await _dbAccess.setupDb(_defaults);
+    await fetchUserData(true);
+    _webService = WebService(
+        _dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults, bus.eventBus);
+    await _webService.init();
+  }
+
+  Future<void> fetchUserData(bool updateEmail) async {
     _currentUserDto =
         await _dbAccess.getCurrentUserDto(_dbAccess.smd, _userTools);
     _currentUserStoreDto =
         await _dbAccess.getCurrentUserStoreDto(_dbAccess.smd, _userTools);
-    _webService = WebService(
-        _dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults, bus.eventBus);
-    await _webService.init();
-    _emailTextController.text = _currentUserStoreDto!.email.toString();
+    if (updateEmail)
+      _emailTextController.text = _currentUserStoreDto!.email.toString();
   }
 
   Future<bool> syncDatabaseFull() async {
     print('start long op');
     unawaited(_controller.forward());
+    await fetchUserData(false);
     String? passKey = _currentUserDto!.pass_key;
     //await Future.delayed(Duration(seconds: 10), () {});
     bool isNewUser = (_currentUserDto!.id == 1);
@@ -257,7 +263,6 @@ class _MyHomePageState extends State<MyHomePage>
                   controller: _emailTextController,
                   decoration: InputDecoration(
                     border: InputBorder.none,
-                    labelText: 'E-Mail',
                     hintText: 'Enter Your E-Mail address',
                     suffixIcon: IconButton(
                       onPressed: () => _emailTextController.clear(),
