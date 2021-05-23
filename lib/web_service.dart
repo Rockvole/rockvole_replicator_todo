@@ -9,6 +9,7 @@ import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 
 class WebService {
   static int C_VERSION = 1;
+  static int C_TOAST_WAIT = 5;
   SchemaMetaData smd;
   SchemaMetaData smdSys;
   UserTools userTools;
@@ -88,11 +89,13 @@ class WebService {
       transmitStatusDto =
           TransmitStatusDto(TransmitStatus.NO_NEW_RECORDS_FOUND);
       eventBus.fire(transmitStatusDto);
+      await Future.delayed(Duration(seconds: C_TOAST_WAIT));
     } else {
       int remainingCount = totalCount;
       int downloadedCount = 0;
       transmitStatusDto = TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
       eventBus.fire(transmitStatusDto);
+      await Future.delayed(Duration(seconds: C_TOAST_WAIT));
       AbstractDatabase db = await DataBaseAccess.getConnection();
       DbTransaction transaction = await DataBaseAccess.getTransaction();
 
@@ -107,6 +110,7 @@ class WebService {
             totalRecords: totalCount,
             userInitiated: false);
         eventBus.fire(transmitStatusDto);
+        await Future.delayed(Duration(seconds: C_TOAST_WAIT));
         List<RemoteDto> remoteDtoList =
             await getRows.requestRemoteDtoListFromServer(waterState);
         if (getRows.wasTableReceived(TaskMixin.C_TABLE_ID)) {

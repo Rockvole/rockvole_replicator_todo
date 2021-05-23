@@ -107,6 +107,7 @@ class Bus {
       dialogShowing = false;
     }
     if(refreshType!= RefreshType.NONE) {
+      dialogShowing=true;
       showDialog(
         context: context,
         barrierDismissible: false,
