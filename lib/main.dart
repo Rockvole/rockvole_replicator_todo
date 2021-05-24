@@ -53,6 +53,7 @@ class _MyHomePageState extends State<MyHomePage>
   List<String> _taskNames = [];
   late Bus bus;
   late Application _application;
+  bool saveEnabled = true;
 
   Future<void> initDb() async {
     _application = Application();
@@ -68,8 +69,13 @@ class _MyHomePageState extends State<MyHomePage>
         await _dbAccess.getCurrentUserDto(_dbAccess.smd, _userTools);
     _currentUserStoreDto =
         await _dbAccess.getCurrentUserStoreDto(_dbAccess.smd, _userTools);
-    if (updateEmail)
-      _emailTextController.text = _currentUserStoreDto!.email.toString();
+    if (updateEmail) {
+      String email = _currentUserStoreDto!.email.toString();
+      setState(() {
+        saveEnabled = email.isEmpty;
+      });
+      _emailTextController.text = email;
+    }
   }
 
   Future<bool> syncDatabaseFull() async {
@@ -265,7 +271,12 @@ class _MyHomePageState extends State<MyHomePage>
                     border: InputBorder.none,
                     hintText: 'Enter Your E-Mail address',
                     suffixIcon: IconButton(
-                      onPressed: () => _emailTextController.clear(),
+                      onPressed: () {
+                        setState(() {
+                          saveEnabled = true;
+                        });
+                        _emailTextController.clear();
+                      },
                       icon: Icon(Icons.clear),
                     ),
                   ),
@@ -273,9 +284,15 @@ class _MyHomePageState extends State<MyHomePage>
                 Padding(
                     padding: EdgeInsets.all(10.0),
                     child: OutlinedButton(
-                        onPressed: () async {
-                          await _dbAccess.storeUser(_emailTextController.text);
-                        },
+                        onPressed: saveEnabled
+                            ? () async {
+                                String email = _emailTextController.text;
+                                await _dbAccess.storeUser(email);
+                                setState(() {
+                                  saveEnabled = email.isEmpty;
+                                });
+                              }
+                            : null,
                         child: Text('Save')))
               ],
             ),
