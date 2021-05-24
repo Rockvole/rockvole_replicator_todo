@@ -51,7 +51,7 @@ class _MyHomePageState extends State<MyHomePage>
   UserStoreDto? _currentUserStoreDto;
   String? _autoCompleteValue;
   List<String> _taskNames = [];
-  late Bus bus;
+  late Bus _bus;
   late Application _application;
   bool saveEnabled = true;
 
@@ -81,7 +81,7 @@ class _MyHomePageState extends State<MyHomePage>
   Future<bool> syncDatabaseFull() async {
     print('start long op');
     _webService = WebService(
-        _dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults, bus.eventBus);
+        _dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults, _bus.eventBus);
     await _webService.init();
     unawaited(_controller.forward());
     await fetchUserData(false);
@@ -133,7 +133,7 @@ class _MyHomePageState extends State<MyHomePage>
           transmitStatusDto.message = message;
         }
       }
-      bus.eventBus.fire(transmitStatusDto);
+      _bus.eventBus.fire(transmitStatusDto);
     } on SocketException catch (e) {
       print("$e");
     }
@@ -147,8 +147,8 @@ class _MyHomePageState extends State<MyHomePage>
   void initState() {
     super.initState();
     initDb();
-    bus = Bus(_application);
-    bus.displayServerStatus(context);
+    _bus = Bus(_application);
+    _bus.displayServerStatus(context);
 
     _controller =
         AnimationController(vsync: this, duration: Duration(seconds: 200));
