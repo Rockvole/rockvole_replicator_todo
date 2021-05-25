@@ -250,12 +250,21 @@ class _MyHomePageState extends State<MyHomePage>
       appBar: AppBar(
         title: Text(widget.title),
         actions: <Widget>[
+          Container(
+              padding: EdgeInsets.all(10),
+              margin: EdgeInsets.all(10),
+              color: Colors.orangeAccent,
+              alignment: Alignment.center,
+              child: Text(
+                'User',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              )),
           AnimatedSync(
             animation: rotateAnimation as Animation<double>,
             callback: () async {
               await syncDatabaseFull();
             },
-          ),
+          )
         ],
       ),
       body: Center(
