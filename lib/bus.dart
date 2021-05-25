@@ -136,8 +136,13 @@ class Bus {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(),
-                    Text("Loading ...", style: TextStyle(fontSize: 20)),
+                    Padding(
+                        padding: EdgeInsets.all(10),
+                        child: CircularProgressIndicator()),
+                    Padding(
+                        padding: EdgeInsets.all(10),
+                        child: Text("Loading ...",
+                            style: TextStyle(fontSize: 20))),
                   ],
                 )),
           );
