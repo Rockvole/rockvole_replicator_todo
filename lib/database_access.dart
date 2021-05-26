@@ -1,6 +1,3 @@
-import 'package:yaml/yaml.dart';
-import 'package:flutter/services.dart' show rootBundle;
-
 import 'package:rockvole_replicator_todo/helpers/SqfliteHelper.dart';
 import 'package:rockvole_db/rockvole_db.dart';
 import 'package:rockvole_db/rockvole_transactions.dart';
@@ -13,35 +10,25 @@ import 'dao/TaskHcDao.dart';
 import 'dao/TaskMixin.dart';
 
 class DataBaseAccess {
-  late SchemaMetaData smd;
-  late SchemaMetaData smdSys;
+  SchemaMetaData _smd;
+  SchemaMetaData _smdSys;
   late List<TaskDto> _taskList;
   late TaskDao _taskDao;
   late UserTools _userTools;
   WardenType _localWardenType = WardenType.USER;
   WardenType _remoteWardenType = WardenType.USER;
 
-  DataBaseAccess(this._userTools);
-
-  Future<void> getYaml() async {
-    String yamlString =
-        await rootBundle.loadString('ancillary/assets/todo_schema.yaml');
-    YamlMap yaml = loadYaml(yamlString);
-    smd = SchemaMetaData.yaml(yaml);
-    smd = SchemaMetaDataTools.createSchemaMetaData(smd);
-    smdSys = TransactionTools.createHcSchemaMetaData(smd);
-  }
+  DataBaseAccess(this._smd, this._smdSys, this._userTools);
 
   Future<List<String>> setupDb(ConfigurationNameDefaults defaults) async {
     List<String> taskNames = [];
-    await getYaml();
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
     // Initialise Configuration table
     ConfigurationDto configurationDto;
     ConfigurationDao configurationDao =
-        ConfigurationDao(smd, transaction, defaults);
+        ConfigurationDao(_smd, transaction, defaults);
     await configurationDao.init(initTable: false);
     await configurationDao.insertDefaultValues();
     try {
@@ -55,7 +42,7 @@ class DataBaseAccess {
       }
     }
     // Get list of tasks
-    _taskDao = TaskDao(smd, transaction);
+    _taskDao = TaskDao(_smd, transaction);
     await _taskDao.init(initTable: false);
     if ((await _taskDao.doesTableExist())) {
       try {
@@ -77,21 +64,21 @@ class DataBaseAccess {
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
     // Put default values in User table
-    UserDao userDao = UserDao(smd, transaction);
+    UserDao userDao = UserDao(_smd, transaction);
     await userDao.init();
 
     UserDto userDto = UserDto.sep(null, null, 0, WardenType.USER, 0, 0);
     int? cuId = await userDao.addDto(userDto, _localWardenType);
 
     // Put default values in User Store table
-    UserStoreDao userStoreDao = UserStoreDao(smd, transaction);
+    UserStoreDao userStoreDao = UserStoreDao(_smd, transaction);
     await userStoreDao.init();
 
     UserStoreDto userStoreDto =
         UserStoreDto.sep(cuId, email, 0, 'User', 'User', 0, 0, 0);
     await userStoreDao.insertDto(userStoreDto);
 
-    await _userTools.setCurrentUserId(smd, transaction, cuId!);
+    await _userTools.setCurrentUserId(_smd, transaction, cuId!);
 
     await db.close();
   }
@@ -103,7 +90,7 @@ class DataBaseAccess {
 
     AbstractWarden abstractWarden = ClientWardenFactory.getAbstractWarden(
         _localWardenType, _remoteWardenType);
-    await abstractWarden.init(TaskMixin.C_TABLE_ID, smd, smdSys, transaction);
+    await abstractWarden.init(TaskMixin.C_TABLE_ID, _smd, _smdSys, transaction);
     HcDto hcDto = HcDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
         null, TaskMixin.C_TABLE_ID);
     TaskHcDto taskHcDto =
@@ -111,7 +98,7 @@ class DataBaseAccess {
     AbstractTableTransactions tableTransactions =
         TableTransactions.sep(taskHcDto, TaskMixin.C_TABLE_ID);
     await tableTransactions.init(
-        _localWardenType, _remoteWardenType, smd, smdSys, transaction);
+        _localWardenType, _remoteWardenType, _smd, _smdSys, transaction);
     abstractWarden.initialize(tableTransactions);
     try {
       await abstractWarden.write();
@@ -128,7 +115,7 @@ class DataBaseAccess {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     UserDto? currentUserDto =
-        await _userTools.getCurrentUserDto(smd, transaction);
+        await _userTools.getCurrentUserDto(_smd, transaction);
     await db.close();
     return currentUserDto;
   }
@@ -137,7 +124,7 @@ class DataBaseAccess {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     UserStoreDto? currentUserStoreDto =
-        await _userTools.getCurrentUserStoreDto(smd, transaction);
+        await _userTools.getCurrentUserStoreDto(_smd, transaction);
     await db.close();
     return currentUserStoreDto;
   }
@@ -158,7 +145,7 @@ class DataBaseAccess {
   Future<bool> isAdmin() async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
-    bool isAdmin = await _userTools.isAdmin(smd, transaction);
+    bool isAdmin = await _userTools.isAdmin(_smd, transaction);
     await db.close();
     return isAdmin;
   }

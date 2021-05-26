@@ -10,9 +10,9 @@ import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 class WebService {
   static int C_VERSION = 1;
   static int C_TOAST_WAIT = 5;
-  SchemaMetaData smd;
-  SchemaMetaData smdSys;
-  UserTools userTools;
+  SchemaMetaData _smd;
+  SchemaMetaData _smdSys;
+  UserTools _userTools;
   ConfigurationNameDefaults defaults;
   late AbstractWarden warden;
   EventBus eventBus;
@@ -21,14 +21,14 @@ class WebService {
   bool taskTableReceived = false;
 
   WebService(
-      this.smd, this.smdSys, this.userTools, this.defaults, this.eventBus) {
+      this._smd, this._smdSys, this._userTools, this.defaults, this.eventBus) {
     taskTableReceived = false;
   }
 
   Future<void> init() async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
-    if (await userTools.isAdmin(smd, transaction))
+    if (await _userTools.isAdmin(_smd, transaction))
       warden = ClientWardenFactory.getAbstractWarden(
           WardenType.ADMIN, WardenType.WRITE_SERVER);
     else
@@ -47,10 +47,10 @@ class WebService {
     RestGetAuthenticationUtils authenticationUtils = RestGetAuthenticationUtils(
         warden.localWardenType,
         warden.remoteWardenType,
-        smd,
-        smdSys,
+        _smd,
+        _smdSys,
         transaction,
-        userTools,
+        _userTools,
         defaults,
         null);
     await authenticationUtils.init();
@@ -100,7 +100,7 @@ class WebService {
       DbTransaction transaction = await DataBaseAccess.getTransaction();
 
       RestGetLatestRowsUtils getRows = RestGetLatestRowsUtils(
-          warden, smd, smdSys, transaction, userTools, defaults);
+          warden, _smd, _smdSys, transaction, _userTools, defaults);
       await getRows.init();
       RemoteStatusDto remoteStatusDto;
       do {
@@ -138,25 +138,25 @@ class WebService {
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     late RemoteDto remoteDto;
 
-    WaterLineDao waterLineDao = WaterLineDao.sep(smdSys, transaction);
+    WaterLineDao waterLineDao = WaterLineDao.sep(_smdSys, transaction);
     await waterLineDao.init();
     late RestPostNewRowUtils restPostNewRowUtils;
     try {
       restPostNewRowUtils = RestPostNewRowUtils(
           warden.localWardenType,
           warden.remoteWardenType,
-          smd,
-          smdSys,
+          _smd,
+          _smdSys,
           transaction,
-          userTools,
+          _userTools,
           defaults);
       await restPostNewRowUtils.init();
     } on SqlException catch (e) {
       if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND)
         print("UI $e");
     }
-    int? sendMins = await userTools.getConfigurationInteger(
-        smd, transaction, ConfigurationNameEnum.SEND_CHANGES_DELAY_MINS);
+    int? sendMins = await _userTools.getConfigurationInteger(
+        _smd, transaction, ConfigurationNameEnum.SEND_CHANGES_DELAY_MINS);
     ClientWarden clientWarden =
         ClientWarden(warden.localWardenType, waterLineDao);
     List<WaterLineDto> waterLineList;
@@ -177,7 +177,7 @@ class WebService {
       waterLineDto = waterLineDtoIter.current;
       try {
         remoteDto = await RemoteDtoFactory.getRemoteDtoFromWaterLineDto(
-            waterLineDto, warden.localWardenType, smdSys, transaction, false);
+            waterLineDto, warden.localWardenType, _smdSys, transaction, false);
         if (sendNow ||
             (cts - (sendMins! * 60) >= remoteDto.hcDto.user_ts!) ||
             remoteDto.waterLineDto!.water_state == WaterState.CLIENT_APPROVED ||

@@ -58,8 +58,9 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> initDb() async {
     _application = Application();
+    await _application.getYaml();
     _userTools = UserTools();
-    _dbAccess = DataBaseAccess(_userTools);
+    _dbAccess = DataBaseAccess(_application.smd,_application.smdSys,_userTools);
     _defaults = ConfigurationNameDefaults();
     _taskNames = await _dbAccess.setupDb(_defaults);
     await fetchUserData(true);
@@ -83,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage>
   Future<bool> syncDatabaseFull() async {
     print('start long op');
     _webService = WebService(
-        _dbAccess.smd, _dbAccess.smdSys, _userTools, _defaults, _bus.eventBus);
+        _application.smd, _application.smdSys, _userTools, _defaults, _bus.eventBus);
     await _webService.init();
     unawaited(_controller.forward());
     await fetchUserData(false);
