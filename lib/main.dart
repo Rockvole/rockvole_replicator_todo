@@ -60,17 +60,16 @@ class _MyHomePageState extends State<MyHomePage>
     _application = Application();
     await _application.getYaml();
     _userTools = UserTools();
-    _dbAccess = DataBaseAccess(_application.smd,_application.smdSys,_userTools);
+    _dbAccess =
+        DataBaseAccess(_application.smd, _application.smdSys, _userTools);
     _defaults = ConfigurationNameDefaults();
     _taskNames = await _dbAccess.setupDb(_defaults);
     await fetchUserData(true);
   }
 
   Future<void> fetchUserData(bool updateEmail) async {
-    _currentUserDto =
-        await _dbAccess.getCurrentUserDto();
-    _currentUserStoreDto =
-        await _dbAccess.getCurrentUserStoreDto();
+    _currentUserDto = await _dbAccess.getCurrentUserDto();
+    _currentUserStoreDto = await _dbAccess.getCurrentUserStoreDto();
     if (updateEmail) {
       String email = _currentUserStoreDto!.email.toString();
       setState(() {
@@ -83,8 +82,8 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<bool> syncDatabaseFull() async {
     print('start long op');
-    _webService = WebService(
-        _application.smd, _application.smdSys, _userTools, _defaults, _bus.eventBus);
+    _webService = WebService(_application.smd, _application.smdSys, _userTools,
+        _defaults, _bus.eventBus);
     await _webService.init();
     unawaited(_controller.forward());
     await fetchUserData(false);
@@ -299,10 +298,28 @@ class _MyHomePageState extends State<MyHomePage>
                         onPressed: saveEnabled
                             ? () async {
                                 String email = _emailTextController.text;
-                                await _dbAccess.storeUser(email);
-                                setState(() {
-                                  saveEnabled = email.isEmpty;
-                                });
+                                if (!email.contains("@")) {
+                                  await showDialog(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                            title: Text('Invalid E-Mail'),
+                                            content: Text(
+                                                'E-Mail address must contain @'),
+                                            actions: <Widget>[
+                                              TextButton(
+                                                child: const Text('OK'),
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                              ),
+                                            ],
+                                          ));
+                                } else {
+                                  await _dbAccess.storeUser(email);
+                                  setState(() {
+                                    saveEnabled = email.isEmpty;
+                                  });
+                                }
                               }
                             : null,
                         child: Text('Save')))

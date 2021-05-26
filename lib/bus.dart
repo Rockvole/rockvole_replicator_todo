@@ -141,7 +141,7 @@ class Bus {
                         child: CircularProgressIndicator()),
                     Padding(
                         padding: EdgeInsets.all(10),
-                        child: Text("Loading ...",
+                        child: Text("Downloading ...",
                             style: TextStyle(fontSize: 20))),
                   ],
                 )),

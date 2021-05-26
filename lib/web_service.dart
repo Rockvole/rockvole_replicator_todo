@@ -273,9 +273,8 @@ class WebService {
           completedRecords: totalCount,
           totalRecords: totalCount,
           userInitiated: false);
-
-      //FoodApplication.getUiEventBus().post(transmitStatusDto);
-      //FoodApplication.getEventBus().post(refreshPageOttoDto);
+      _eventBus.fire(transmitStatusDto);
+      await Future.delayed(Duration(seconds: C_TOAST_WAIT));
     }
     await db.close();
   }
