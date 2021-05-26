@@ -124,22 +124,20 @@ class DataBaseAccess {
     return taskNames;
   }
 
-  Future<UserDto?> getCurrentUserDto(
-      SchemaMetaData smd, UserTools userTools) async {
+  Future<UserDto?> getCurrentUserDto() async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     UserDto? currentUserDto =
-        await userTools.getCurrentUserDto(smd, transaction);
+        await _userTools.getCurrentUserDto(smd, transaction);
     await db.close();
     return currentUserDto;
   }
 
-  Future<UserStoreDto?> getCurrentUserStoreDto(
-      SchemaMetaData smd, UserTools userTools) async {
+  Future<UserStoreDto?> getCurrentUserStoreDto() async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     UserStoreDto? currentUserStoreDto =
-        await userTools.getCurrentUserStoreDto(smd, transaction);
+        await _userTools.getCurrentUserStoreDto(smd, transaction);
     await db.close();
     return currentUserStoreDto;
   }

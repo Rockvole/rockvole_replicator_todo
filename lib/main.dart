@@ -67,9 +67,9 @@ class _MyHomePageState extends State<MyHomePage>
 
   Future<void> fetchUserData(bool updateEmail) async {
     _currentUserDto =
-        await _dbAccess.getCurrentUserDto(_dbAccess.smd, _userTools);
+        await _dbAccess.getCurrentUserDto();
     _currentUserStoreDto =
-        await _dbAccess.getCurrentUserStoreDto(_dbAccess.smd, _userTools);
+        await _dbAccess.getCurrentUserStoreDto();
     if (updateEmail) {
       String email = _currentUserStoreDto!.email.toString();
       setState(() {
