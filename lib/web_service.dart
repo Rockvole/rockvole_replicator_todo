@@ -13,7 +13,7 @@ class WebService {
   SchemaMetaData _smd;
   SchemaMetaData _smdSys;
   UserTools _userTools;
-  ConfigurationNameDefaults defaults;
+  ConfigurationNameDefaults _defaults;
   late AbstractWarden warden;
   EventBus eventBus;
   TransmitStatusDto transmitStatusDto =
@@ -21,7 +21,7 @@ class WebService {
   bool taskTableReceived = false;
 
   WebService(
-      this._smd, this._smdSys, this._userTools, this.defaults, this.eventBus) {
+      this._smd, this._smdSys, this._userTools, this._defaults, this.eventBus) {
     taskTableReceived = false;
   }
 
@@ -51,7 +51,7 @@ class WebService {
         _smdSys,
         transaction,
         _userTools,
-        defaults,
+        _defaults,
         null);
     await authenticationUtils.init();
     try {
@@ -100,7 +100,7 @@ class WebService {
       DbTransaction transaction = await DataBaseAccess.getTransaction();
 
       RestGetLatestRowsUtils getRows = RestGetLatestRowsUtils(
-          warden, _smd, _smdSys, transaction, _userTools, defaults);
+          warden, _smd, _smdSys, transaction, _userTools, _defaults);
       await getRows.init();
       RemoteStatusDto remoteStatusDto;
       do {
@@ -149,7 +149,7 @@ class WebService {
           _smdSys,
           transaction,
           _userTools,
-          defaults);
+          _defaults);
       await restPostNewRowUtils.init();
     } on SqlException catch (e) {
       if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND)
