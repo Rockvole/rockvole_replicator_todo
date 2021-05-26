@@ -54,6 +54,7 @@ class _MyHomePageState extends State<MyHomePage>
   late Bus _bus;
   late Application _application;
   bool saveEnabled = true;
+  bool _isAdmin = false;
 
   Future<void> initDb() async {
     _application = Application();
@@ -76,6 +77,7 @@ class _MyHomePageState extends State<MyHomePage>
       });
       _emailTextController.text = email;
     }
+    _isAdmin = await _dbAccess.isAdmin();
   }
 
   Future<bool> syncDatabaseFull() async {
@@ -256,7 +258,7 @@ class _MyHomePageState extends State<MyHomePage>
               color: Colors.orangeAccent,
               alignment: Alignment.center,
               child: Text(
-                'User',
+                _isAdmin ? 'Admin' : 'User',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               )),
           AnimatedSync(

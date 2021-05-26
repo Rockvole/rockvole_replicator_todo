@@ -156,4 +156,12 @@ class DataBaseAccess {
         'task_data', (await getDatabasesPath()).toString());
     return transaction;
   }
+  
+  Future<bool> isAdmin() async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+    bool isAdmin = await _userTools.isAdmin(smd, transaction);
+    await db.close();
+    return isAdmin;
+  }
 }
