@@ -15,13 +15,13 @@ class WebService {
   UserTools _userTools;
   ConfigurationNameDefaults _defaults;
   late AbstractWarden warden;
-  EventBus eventBus;
+  EventBus _eventBus;
   TransmitStatusDto transmitStatusDto =
       TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
   bool taskTableReceived = false;
 
   WebService(
-      this._smd, this._smdSys, this._userTools, this._defaults, this.eventBus) {
+      this._smd, this._smdSys, this._userTools, this._defaults, this._eventBus) {
     taskTableReceived = false;
   }
 
@@ -88,13 +88,13 @@ class WebService {
     if (totalCount == 0) {
       transmitStatusDto =
           TransmitStatusDto(TransmitStatus.NO_NEW_RECORDS_FOUND);
-      eventBus.fire(transmitStatusDto);
+      _eventBus.fire(transmitStatusDto);
       await Future.delayed(Duration(seconds: C_TOAST_WAIT));
     } else {
       int remainingCount = totalCount;
       int downloadedCount = 0;
       transmitStatusDto = TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
-      eventBus.fire(transmitStatusDto);
+      _eventBus.fire(transmitStatusDto);
       await Future.delayed(Duration(seconds: C_TOAST_WAIT));
       AbstractDatabase db = await DataBaseAccess.getConnection();
       DbTransaction transaction = await DataBaseAccess.getTransaction();
@@ -109,7 +109,7 @@ class WebService {
             completedRecords: downloadedCount,
             totalRecords: totalCount,
             userInitiated: false);
-        eventBus.fire(transmitStatusDto);
+        _eventBus.fire(transmitStatusDto);
         await Future.delayed(Duration(seconds: C_TOAST_WAIT));
         List<RemoteDto> remoteDtoList =
             await getRows.requestRemoteDtoListFromServer(waterState);
@@ -126,7 +126,7 @@ class WebService {
           completedRecords: totalCount,
           totalRecords: totalCount,
           userInitiated: false);
-      eventBus.fire(transmitStatusDto);
+      _eventBus.fire(transmitStatusDto);
       await db.close();
     }
     return transmitStatusDto.transmitStatus;
@@ -273,6 +273,7 @@ class WebService {
           completedRecords: totalCount,
           totalRecords: totalCount,
           userInitiated: false);
+
       //FoodApplication.getUiEventBus().post(transmitStatusDto);
       //FoodApplication.getEventBus().post(refreshPageOttoDto);
     }
