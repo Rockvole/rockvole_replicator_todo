@@ -1,14 +1,11 @@
-import 'dart:io';
-
+import 'package:pedantic/pedantic.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/material.dart';
-import 'package:pedantic/pedantic.dart';
 import 'package:rockvole_db/rockvole_transactions.dart';
 import 'package:rockvole_db/rockvole_web_services.dart';
 
 import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 import 'refresh_service.dart';
-import 'web_service.dart';
 
 void main() => runApp(MyApp());
 
@@ -46,9 +43,8 @@ class _MyHomePageState extends State<MyHomePage>
   late ConfigurationNameDefaults _defaults;
   late UserTools _userTools;
   late DataBaseAccess _dbAccess;
-  late WebService _webService;
-  UserDto? _currentUserDto;
-  UserStoreDto? _currentUserStoreDto;
+  late UserDto _currentUserDto;
+  late UserStoreDto _currentUserStoreDto;
   String? _autoCompleteValue;
   List<String> _taskNames = [];
   late Bus _bus;
@@ -65,92 +61,30 @@ class _MyHomePageState extends State<MyHomePage>
     _defaults = ConfigurationNameDefaults();
     _taskNames = await _dbAccess.setupDb(_defaults);
     await fetchUserData(true);
+    _bus = Bus(_application);
+    _bus.displayServerStatus(context);
   }
 
   Future<void> fetchUserData(bool updateEmail) async {
     _currentUserDto = await _dbAccess.getCurrentUserDto();
     _currentUserStoreDto = await _dbAccess.getCurrentUserStoreDto();
     if (updateEmail) {
-      String email = _currentUserStoreDto!.email.toString();
+      String email = _currentUserStoreDto.email.toString();
       setState(() {
         saveEnabled = email.isEmpty;
       });
       _emailTextController.text = email;
     }
-    _isAdmin = await _dbAccess.isAdmin();
-  }
-
-  Future<bool> syncDatabaseFull() async {
-    print('start long op');
-    _webService = WebService(_application.smd, _application.smdSys, _userTools,
-        _defaults, _bus.eventBus);
-    await _webService.init();
-    unawaited(_controller.forward());
-    await fetchUserData(false);
-    String? passKey = _currentUserDto!.pass_key;
-    //await Future.delayed(Duration(seconds: 10), () {});
-    bool isNewUser = (_currentUserDto!.id == 1);
-    try {
-      if (!isNewUser && _currentUserDto!.pass_key != null) {
-        await _webService.sendChanges(null, true);
-      }
-      AuthenticationDto? authenticationDto =
-          await _webService.authenticateUser(WaterState.SERVER_APPROVED, true);
-      if (authenticationDto != null) {
-        TransmitStatus? transmitStatus = await _webService.downloadRows(
-            WaterState.SERVER_APPROVED, authenticationDto.newRecords);
-      }
-      if (_currentUserDto!.warden == WardenType.ADMIN) {
-        authenticationDto =
-            await _webService.authenticateUser(WaterState.SERVER_PENDING, true);
-        if (authenticationDto != null)
-          await _webService.downloadRows(
-              WaterState.SERVER_APPROVED, authenticationDto.newRecords);
-      }
-      if (_webService.taskTableReceived) {
-        _taskNames = await _dbAccess.setupDb(_defaults);
-        setState(() {}); // Refresh screen
-        blank();
-      }
-    } on TransmitStatusException catch (e) {
-      print(e.cause);
-      String? message;
-      switch (e.transmitStatus) {
-        case TransmitStatus.REMOTE_STATE_ERROR:
-          message = e.cause;
-          break;
-        case TransmitStatus.SOCKET_TIMEOUT:
-          message = e.sourceName;
-          break;
-        case TransmitStatus.USER_UPDATED:
-          //AlarmReceiver.correctAlarmRange(this, false, application);
-          break;
-        default:
-      }
-      TransmitStatusDto transmitStatusDto = TransmitStatusDto(e.transmitStatus,
-          message: message, userInitiated: true);
-      if (e.remoteStatus != null) {
-        transmitStatusDto.remoteStatus = e.remoteStatus;
-        if (e.remoteStatus == RemoteStatus.CUSTOM_ERROR) {
-          transmitStatusDto.message = message;
-        }
-      }
-      _bus.eventBus.fire(transmitStatusDto);
-    } on SocketException catch (e) {
-      print("$e");
-    }
-    print('stop long op');
-    _controller.stop();
-    _controller.reset();
-    return Future.value(true);
+    bool ia = await _dbAccess.isAdmin();
+    setState(() {
+      _isAdmin=ia;
+    });
   }
 
   @override
   void initState() {
     super.initState();
     initDb();
-    _bus = Bus(_application);
-    _bus.displayServerStatus(context);
 
     _controller =
         AnimationController(vsync: this, duration: Duration(seconds: 200));
@@ -173,6 +107,7 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
+    RestIntentService intent = RestIntentService(_application, _userTools, _defaults, _bus);
     String _autoCompleteSelection;
     RawAutocomplete rawAutocomplete = RawAutocomplete(
         textEditingController: _textEditingController,
@@ -264,7 +199,16 @@ class _MyHomePageState extends State<MyHomePage>
           AnimatedSync(
             animation: rotateAnimation as Animation<double>,
             callback: () async {
-              await syncDatabaseFull();
+              unawaited(_controller.forward());
+              await fetchUserData(false);
+              bool taskTableReceived = await intent.syncDatabaseFull(_currentUserDto, _currentUserStoreDto);
+              if(taskTableReceived) {
+                _taskNames = await _dbAccess.setupDb(_defaults);
+                setState(() {}); // Refresh screen
+                blank();
+              }
+              _controller.stop();
+              _controller.reset();
             },
           )
         ],

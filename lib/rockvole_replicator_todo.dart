@@ -4,4 +4,5 @@ export 'application.dart';
 export 'bus.dart';
 export 'database_access.dart';
 export 'refresh_service.dart';
+export 'rest_intent_service.dart';
 export 'web_service.dart';
