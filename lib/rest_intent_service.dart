@@ -9,22 +9,14 @@ import 'web_service.dart';
 class RestIntentService {
   late WebService _webService;
   Application _application;
-  UserTools _userTools;
-  ConfigurationNameDefaults _defaults;
-  Bus _bus;
 
-  //UserDto? _currentUserDto;
-  //UserStoreDto? _currentUserStoreDto;
-
-  RestIntentService(this._application, this._userTools, this._defaults, this._bus);
+  RestIntentService(this._application);
 
   Future<bool> syncDatabaseFull(UserDto _currentUserDto, UserStoreDto _currentUserStoreDto) async {
     print('start long op');
-    _webService = WebService(_application.smd, _application.smdSys, _userTools,
-        _defaults, _bus.eventBus);
+    _webService = WebService(_application.smd, _application.smdSys, _application.userTools,
+        _application.defaults, _application.bus.eventBus);
     await _webService.init();
-    //unawaited(_controller.forward());
-    //await fetchUserData(false);
     String? passKey = _currentUserDto.pass_key;
     bool isNewUser = (_currentUserDto.id == 1);
     try {
@@ -44,11 +36,6 @@ class RestIntentService {
           await _webService.downloadRows(
               WaterState.SERVER_APPROVED, authenticationDto.newRecords);
       }
-      //if (_webService.taskTableReceived) {
-      //  _taskNames = await _dbAccess.setupDb(_defaults);
-      //  setState(() {}); // Refresh screen
-      //  blank();
-      //}
     } on TransmitStatusException catch (e) {
       print(e.cause);
       String? message;
@@ -72,13 +59,11 @@ class RestIntentService {
           transmitStatusDto.message = message;
         }
       }
-      _bus.eventBus.fire(transmitStatusDto);
+      _application.bus.eventBus.fire(transmitStatusDto);
     } on SocketException catch (e) {
       print("$e");
     }
     print('stop long op');
-    //_controller.stop();
-    //_controller.reset();
     return Future.value(_webService.taskTableReceived);
   }
 

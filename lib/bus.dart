@@ -8,10 +8,10 @@ enum RefreshType { NONE, DOWNLOADING, UPLOADING, UPDATING }
 
 class Bus {
   bool dialogShowing = false;
-  Application application;
+  Application _application;
   EventBus eventBus = EventBus();
 
-  Bus(this.application);
+  Bus(this._application);
 
   displayServerStatus(BuildContext context) {
     eventBus
@@ -22,55 +22,55 @@ class Bus {
       String? message = transmitStatusDto.message;
       switch (transmitStatusDto.transmitStatus) {
         case TransmitStatus.DOWNLOAD_STARTED:
-          application.serverStatus = ServerStatus.TRANSMITTING;
+          _application.serverStatus = ServerStatus.TRANSMITTING;
           showRefreshDialog(RefreshType.DOWNLOADING, transmitStatusDto.message,
               transmitStatusDto.isDeterminate, context);
           break;
         case TransmitStatus.DOWNLOAD_STOPPED:
-          application.serverStatus = ServerStatus.USER_STOPPED;
+          _application.serverStatus = ServerStatus.USER_STOPPED;
           showRefreshDialog(RefreshType.NONE, transmitStatusDto.message,
               transmitStatusDto.isDeterminate, context);
           //supportInvalidateOptionsMenu();
           break;
         case TransmitStatus.UPLOAD_STARTED:
-          application.serverStatus = ServerStatus.TRANSMITTING;
+          _application.serverStatus = ServerStatus.TRANSMITTING;
           showRefreshDialog(RefreshType.UPLOADING, transmitStatusDto.message,
               transmitStatusDto.isDeterminate, context);
           break;
         case TransmitStatus.UPDATE_STARTED:
           message = null;
-          application.serverStatus = ServerStatus.TRANSMITTING;
+          _application.serverStatus = ServerStatus.TRANSMITTING;
           showRefreshDialog(RefreshType.UPDATING, transmitStatusDto.message,
               transmitStatusDto.isDeterminate, context);
           break;
         case TransmitStatus.RECORDS_REMAINING:
           break;
         case TransmitStatus.NO_DATA_CONNECTION:
-          application.serverStatus = ServerStatus.ERROR;
+          _application.serverStatus = ServerStatus.ERROR;
           break;
         case TransmitStatus.WIFI_NOT_FOUND:
-          application.serverStatus = ServerStatus.ERROR;
+          _application.serverStatus = ServerStatus.ERROR;
           showRefreshDialog(RefreshType.NONE, transmitStatusDto.message,
               transmitStatusDto.isDeterminate, context);
           //startPreferences();
           //supportInvalidateOptionsMenu();
           break;
         case TransmitStatus.USER_NOT_REGISTERED:
-          application.serverStatus = ServerStatus.ERROR;
+          _application.serverStatus = ServerStatus.ERROR;
           if (transmitStatusDto.userInitiated!) {
             //startPreferences();
           }
           break;
         case TransmitStatus.USER_UPDATED:
-          application.serverStatus = ServerStatus.COMPLETE;
-          application.initialize();
+          _application.serverStatus = ServerStatus.COMPLETE;
+          //application.init();
           //pagerAdapter.notifyDataSetChanged();
           break;
         case TransmitStatus.SERVER_NOT_FOUND:
         case TransmitStatus.REMOTE_STATE_ERROR:
-          application.serverStatus = ServerStatus.ERROR;
+          _application.serverStatus = ServerStatus.ERROR;
           if (transmitStatusDto.userInitiated!) {
-            application.remoteStatus = transmitStatusDto.remoteStatus;
+            _application.remoteStatus = transmitStatusDto.remoteStatus;
             if (transmitStatusDto.remoteStatus ==
                     RemoteStatus.AUTHENTICATION_FAILED ||
                 transmitStatusDto.remoteStatus ==
@@ -84,7 +84,7 @@ class Bus {
           //supportInvalidateOptionsMenu();
           break;
         case TransmitStatus.SOCKET_TIMEOUT:
-          application.serverStatus = ServerStatus.ERROR;
+          _application.serverStatus = ServerStatus.ERROR;
           message = transmitStatusDto.message.toString() +
               " " +
               TransmitStatusDto.getDefaultMessage(
@@ -96,7 +96,7 @@ class Bus {
           break;
         case TransmitStatus.UPDATE_COMPLETE:
           message = null;
-          application.serverStatus = ServerStatus.COMPLETE;
+          _application.serverStatus = ServerStatus.COMPLETE;
           break;
         case TransmitStatus.DOWNLOAD_COMPLETE:
         case TransmitStatus.INVALID_SERVER_REQUEST:
@@ -104,7 +104,7 @@ class Bus {
         case TransmitStatus.PARSE_ERROR:
         case TransmitStatus.RESOURCE_NOT_FOUND:
         case TransmitStatus.UPLOAD_COMPLETE:
-          application.serverStatus = ServerStatus.COMPLETE;
+          _application.serverStatus = ServerStatus.COMPLETE;
           showRefreshDialog(RefreshType.NONE, transmitStatusDto.message,
               transmitStatusDto.isDeterminate, context);
         //supportInvalidateOptionsMenu();

@@ -40,34 +40,25 @@ class _MyHomePageState extends State<MyHomePage>
   late Animation colorAnimation;
   late Animation rotateAnimation;
   FocusNode _focusNode = FocusNode();
-  late ConfigurationNameDefaults _defaults;
-  late UserTools _userTools;
-  late DataBaseAccess _dbAccess;
   late UserDto _currentUserDto;
   late UserStoreDto _currentUserStoreDto;
   String? _autoCompleteValue;
   List<String> _taskNames = [];
-  late Bus _bus;
   late Application _application;
   bool saveEnabled = true;
   bool _isAdmin = false;
 
   Future<void> initDb() async {
     _application = Application();
-    await _application.getYaml();
-    _userTools = UserTools();
-    _dbAccess =
-        DataBaseAccess(_application.smd, _application.smdSys, _userTools);
-    _defaults = ConfigurationNameDefaults();
-    _taskNames = await _dbAccess.setupDb(_defaults);
+    await _application.init();
+    _taskNames = await _application.dbAccess.setupDb(_application.defaults);
     await fetchUserData(true);
-    _bus = Bus(_application);
-    _bus.displayServerStatus(context);
+    _application.bus.displayServerStatus(context);
   }
 
   Future<void> fetchUserData(bool updateEmail) async {
-    _currentUserDto = await _dbAccess.getCurrentUserDto();
-    _currentUserStoreDto = await _dbAccess.getCurrentUserStoreDto();
+    _currentUserDto = await _application.dbAccess.getCurrentUserDto();
+    _currentUserStoreDto = await _application.dbAccess.getCurrentUserStoreDto();
     if (updateEmail) {
       String email = _currentUserStoreDto.email.toString();
       setState(() {
@@ -75,7 +66,7 @@ class _MyHomePageState extends State<MyHomePage>
       });
       _emailTextController.text = email;
     }
-    bool ia = await _dbAccess.isAdmin();
+    bool ia = await _application.dbAccess.isAdmin();
     setState(() {
       _isAdmin=ia;
     });
@@ -107,7 +98,7 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    RestIntentService intent = RestIntentService(_application, _userTools, _defaults, _bus);
+    RestIntentService intent = RestIntentService(_application);
     String _autoCompleteSelection;
     RawAutocomplete rawAutocomplete = RawAutocomplete(
         textEditingController: _textEditingController,
@@ -203,7 +194,7 @@ class _MyHomePageState extends State<MyHomePage>
               await fetchUserData(false);
               bool taskTableReceived = await intent.syncDatabaseFull(_currentUserDto, _currentUserStoreDto);
               if(taskTableReceived) {
-                _taskNames = await _dbAccess.setupDb(_defaults);
+                _taskNames = await _application.dbAccess.setupDb(_application.defaults);
                 setState(() {}); // Refresh screen
                 blank();
               }
@@ -259,7 +250,7 @@ class _MyHomePageState extends State<MyHomePage>
                                             ],
                                           ));
                                 } else {
-                                  await _dbAccess.storeUser(email);
+                                  await _application.dbAccess.storeUser(email);
                                   setState(() {
                                     saveEnabled = email.isEmpty;
                                   });
@@ -277,7 +268,7 @@ class _MyHomePageState extends State<MyHomePage>
                       onPressed: () async {
                         String text = _textEditingController.text;
                         if (_autoCompleteValue != null)
-                          _taskNames = await _dbAccess.addTask(
+                          _taskNames = await _application.dbAccess.addTask(
                               _autoCompleteValue!, false, _taskNames);
                         blank();
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

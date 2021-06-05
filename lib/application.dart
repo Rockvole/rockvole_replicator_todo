@@ -5,6 +5,8 @@ import 'package:rockvole_db/rockvole_db.dart';
 import 'package:rockvole_db/rockvole_transactions.dart';
 import 'package:rockvole_db/rockvole_web_services.dart';
 
+import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
+
 enum ServerStatus { ERROR, TRANSMITTING, COMPLETE, USER_STOPPED }
 
 class Application {
@@ -19,8 +21,19 @@ class Application {
   late SchemaMetaData smdSys;
   ServerStatus serverStatus=ServerStatus.COMPLETE;
   RemoteStatus? remoteStatus=RemoteStatus.PROCESSED_OK;
-  initialize() {
+  late UserTools userTools;
+  late DataBaseAccess dbAccess;
+  late ConfigurationNameDefaults defaults;
+  late Bus bus;
+
+  init() async {
+    await getYaml();
     serverStatus=ServerStatus.COMPLETE;
+    userTools = UserTools();
+    dbAccess =
+        DataBaseAccess(_application.smd, _application.smdSys, userTools);
+    defaults = ConfigurationNameDefaults();
+    bus = Bus(_application);
   }
 
   Future<void> getYaml() async {
