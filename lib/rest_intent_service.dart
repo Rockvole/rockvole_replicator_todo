@@ -27,14 +27,14 @@ class RestIntentService {
       await _webService.authenticateUser(WaterState.SERVER_APPROVED, true);
       if (authenticationDto != null) {
         TransmitStatus? transmitStatus = await _webService.downloadRows(
-            WaterState.SERVER_APPROVED, authenticationDto.newRecords);
+            WaterState.SERVER_APPROVED, authenticationDto.newRecords!);
       }
       if (_currentUserDto.warden == WardenType.ADMIN) {
         authenticationDto =
         await _webService.authenticateUser(WaterState.SERVER_PENDING, true);
         if (authenticationDto != null)
           await _webService.downloadRows(
-              WaterState.SERVER_APPROVED, authenticationDto.newRecords);
+              WaterState.SERVER_APPROVED, authenticationDto.newRecords!);
       }
     } on TransmitStatusException catch (e) {
       print(e.cause);
