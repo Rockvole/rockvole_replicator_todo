@@ -12,7 +12,7 @@ class RestIntentService {
 
   RestIntentService(this._application);
 
-  Future<bool> syncDatabaseFull(UserDto _currentUserDto, UserStoreDto _currentUserStoreDto) async {
+  Future<Set<int>> syncDatabaseFull(UserDto _currentUserDto, UserStoreDto _currentUserStoreDto) async {
     print('start long op');
     _webService = WebService(_application.smd, _application.smdSys, _application.userTools,
         _application.defaults, _application.bus.eventBus);
@@ -64,7 +64,7 @@ class RestIntentService {
       print("$e");
     }
     print('stop long op');
-    return Future.value(_webService.taskTableReceived);
+    return Future.value(_webService.tableTypeSet);
   }
 
 }

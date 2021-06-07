@@ -18,11 +18,10 @@ class WebService {
   EventBus _eventBus;
   TransmitStatusDto transmitStatusDto =
       TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
-  bool taskTableReceived = false;
+  Set<int> tableTypeSet = Set();
 
   WebService(
       this._smd, this._smdSys, this._userTools, this._defaults, this._eventBus) {
-    taskTableReceived = false;
   }
 
   Future<void> init() async {
@@ -113,9 +112,6 @@ class WebService {
         await Future.delayed(Duration(seconds: C_TOAST_WAIT));
         List<RemoteDto> remoteDtoList =
             await getRows.requestRemoteDtoListFromServer(waterState);
-        if (getRows.wasTableReceived(TaskMixin.C_TABLE_ID)) {
-          taskTableReceived = true;
-        }
 
         remoteStatusDto = await getRows.storeRemoteDtoList(remoteDtoList);
         remainingCount = remainingCount - remoteDtoList.length;
@@ -128,6 +124,7 @@ class WebService {
           userInitiated: false);
       _eventBus.fire(transmitStatusDto);
       await db.close();
+      tableTypeSet.addAll(getRows.tableTypeSet);
     }
     return transmitStatusDto.transmitStatus;
   }

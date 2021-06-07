@@ -3,6 +3,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/material.dart';
 import 'package:rockvole_db/rockvole_transactions.dart';
 import 'package:rockvole_db/rockvole_web_services.dart';
+import 'package:rockvole_replicator_todo/dao/TaskMixin.dart';
 
 import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 import 'refresh_service.dart';
@@ -13,11 +14,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Rockvole Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage('Flutter Demo Home Page'),
+      home: MyHomePage('Rockvole Replicator Demo'),
       debugShowCheckedModeBanner: false,
     );
   }
@@ -192,8 +193,8 @@ class _MyHomePageState extends State<MyHomePage>
             callback: () async {
               unawaited(_controller.forward());
               await fetchUserData(false);
-              bool taskTableReceived = await intent.syncDatabaseFull(_currentUserDto, _currentUserStoreDto);
-              if(taskTableReceived) {
+              Set tableTypeSet = await intent.syncDatabaseFull(_currentUserDto, _currentUserStoreDto);
+              if(tableTypeSet.contains(TaskMixin.C_TABLE_ID)) {
                 _taskNames = await _application.dbAccess.setupDb(_application.defaults);
                 setState(() {}); // Refresh screen
                 blank();
