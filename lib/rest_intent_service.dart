@@ -14,8 +14,7 @@ class RestIntentService {
 
   Future<Set<int>> syncDatabaseFull(UserDto _currentUserDto, UserStoreDto _currentUserStoreDto) async {
     print('start long op');
-    _webService = WebService(_application.smd, _application.smdSys, _application.userTools,
-        _application.defaults, _application.bus.eventBus);
+    _webService = WebService(_application);
     await _webService.init();
     String? passKey = _currentUserDto.pass_key;
     bool isNewUser = (_currentUserDto.id == 1);

@@ -3,31 +3,27 @@ import 'package:rockvole_db/rockvole_data.dart';
 import 'package:rockvole_db/rockvole_db.dart';
 import 'package:rockvole_db/rockvole_transactions.dart';
 import 'package:rockvole_db/rockvole_web_services.dart';
-import 'package:rockvole_replicator_todo/dao/TaskMixin.dart';
 
 import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 
 class WebService {
   static int C_VERSION = 1;
   static int C_TOAST_WAIT = 5;
-  SchemaMetaData _smd;
-  SchemaMetaData _smdSys;
-  UserTools _userTools;
-  ConfigurationNameDefaults _defaults;
+  Application _application;
   late AbstractWarden warden;
-  EventBus _eventBus;
   TransmitStatusDto transmitStatusDto =
       TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
   Set<int> tableTypeSet = Set();
 
   WebService(
-      this._smd, this._smdSys, this._userTools, this._defaults, this._eventBus) {
+      this._application) {
   }
 
   Future<void> init() async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
-    if (await _userTools.isAdmin(_smd, transaction))
+    bool ia=await _application.userTools.isAdmin(_application.smd, transaction);
+    if (await _application.userTools.isAdmin(_application.smd, transaction))
       warden = ClientWardenFactory.getAbstractWarden(
           WardenType.ADMIN, WardenType.WRITE_SERVER);
     else
@@ -46,11 +42,11 @@ class WebService {
     RestGetAuthenticationUtils authenticationUtils = RestGetAuthenticationUtils(
         warden.localWardenType,
         warden.remoteWardenType,
-        _smd,
-        _smdSys,
+        _application.smd,
+        _application.smdSys,
         transaction,
-        _userTools,
-        _defaults,
+        _application.userTools,
+        _application.defaults,
         null);
     await authenticationUtils.init();
     try {
@@ -87,19 +83,19 @@ class WebService {
     if (totalCount == 0) {
       transmitStatusDto =
           TransmitStatusDto(TransmitStatus.NO_NEW_RECORDS_FOUND);
-      _eventBus.fire(transmitStatusDto);
+      _application.bus.eventBus.fire(transmitStatusDto);
       await Future.delayed(Duration(seconds: C_TOAST_WAIT));
     } else {
       int remainingCount = totalCount;
       int downloadedCount = 0;
       transmitStatusDto = TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
-      _eventBus.fire(transmitStatusDto);
+      _application.bus.eventBus.fire(transmitStatusDto);
       await Future.delayed(Duration(seconds: C_TOAST_WAIT));
       AbstractDatabase db = await DataBaseAccess.getConnection();
       DbTransaction transaction = await DataBaseAccess.getTransaction();
 
       RestGetLatestRowsUtils getRows = RestGetLatestRowsUtils(
-          warden, _smd, _smdSys, transaction, _userTools, _defaults);
+          warden, _application.smd, _application.smdSys, transaction, _application.userTools, _application.defaults);
       await getRows.init();
       RemoteStatusDto remoteStatusDto;
       do {
@@ -108,7 +104,7 @@ class WebService {
             completedRecords: downloadedCount,
             totalRecords: totalCount,
             userInitiated: false);
-        _eventBus.fire(transmitStatusDto);
+        _application.bus.eventBus.fire(transmitStatusDto);
         await Future.delayed(Duration(seconds: C_TOAST_WAIT));
         List<RemoteDto> remoteDtoList =
             await getRows.requestRemoteDtoListFromServer(waterState);
@@ -122,7 +118,7 @@ class WebService {
           completedRecords: totalCount,
           totalRecords: totalCount,
           userInitiated: false);
-      _eventBus.fire(transmitStatusDto);
+      _application.bus.eventBus.fire(transmitStatusDto);
       await db.close();
       tableTypeSet.addAll(getRows.tableTypeSet);
     }
@@ -135,25 +131,25 @@ class WebService {
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     late RemoteDto remoteDto;
 
-    WaterLineDao waterLineDao = WaterLineDao.sep(_smdSys, transaction);
+    WaterLineDao waterLineDao = WaterLineDao.sep(_application.smdSys, transaction);
     await waterLineDao.init();
     late RestPostNewRowUtils restPostNewRowUtils;
     try {
       restPostNewRowUtils = RestPostNewRowUtils(
           warden.localWardenType,
           warden.remoteWardenType,
-          _smd,
-          _smdSys,
+          _application.smd,
+          _application.smdSys,
           transaction,
-          _userTools,
-          _defaults);
+          _application.userTools,
+          _application.defaults);
       await restPostNewRowUtils.init();
     } on SqlException catch (e) {
       if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND)
         print("UI $e");
     }
-    int? sendMins = await _userTools.getConfigurationInteger(
-        _smd, transaction, ConfigurationNameEnum.SEND_CHANGES_DELAY_MINS);
+    int? sendMins = await _application.userTools.getConfigurationInteger(
+        _application.smd, transaction, ConfigurationNameEnum.SEND_CHANGES_DELAY_MINS);
     ClientWarden clientWarden =
         ClientWarden(warden.localWardenType, waterLineDao);
     List<WaterLineDto> waterLineList;
@@ -174,7 +170,7 @@ class WebService {
       waterLineDto = waterLineDtoIter.current;
       try {
         remoteDto = await RemoteDtoFactory.getRemoteDtoFromWaterLineDto(
-            waterLineDto, warden.localWardenType, _smdSys, transaction, false);
+            waterLineDto, warden.localWardenType, _application.smdSys, transaction, false);
         if (sendNow ||
             (cts - (sendMins! * 60) >= remoteDto.hcDto.user_ts!) ||
             remoteDto.waterLineDto!.water_state == WaterState.CLIENT_APPROVED ||
@@ -270,7 +266,7 @@ class WebService {
           completedRecords: totalCount,
           totalRecords: totalCount,
           userInitiated: false);
-      _eventBus.fire(transmitStatusDto);
+      _application.bus.eventBus.fire(transmitStatusDto);
       await Future.delayed(Duration(seconds: C_TOAST_WAIT));
     }
     await db.close();
