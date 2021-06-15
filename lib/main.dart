@@ -199,6 +199,10 @@ class _MyHomePageState extends State<MyHomePage>
                 setState(() {}); // Refresh screen
                 blank();
               }
+              if(tableTypeSet.contains(UserMixin.C_TABLE_ID)) {
+                setState(() {}); // Refresh screen
+                blank();
+              }
               _controller.stop();
               _controller.reset();
             },

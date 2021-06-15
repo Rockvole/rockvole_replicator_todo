@@ -6,9 +6,10 @@ import 'package:rockvole_db/rockvole_web_services.dart';
 
 import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 
-class WebService {
+class WebService extends UserChangeListener {
   static int C_VERSION = 1;
   static int C_TOAST_WAIT = 5;
+  UserChangeEnum? userChangeEnum;
   Application _application;
   late AbstractWarden warden;
   TransmitStatusDto transmitStatusDto =
@@ -47,7 +48,7 @@ class WebService {
         transaction,
         _application.userTools,
         _application.defaults,
-        null);
+        this);
     await authenticationUtils.init();
     try {
       currentTs = TimeUtils.getNowCustomTs();
@@ -108,7 +109,9 @@ class WebService {
         await Future.delayed(Duration(seconds: C_TOAST_WAIT));
         List<RemoteDto> remoteDtoList =
             await getRows.requestRemoteDtoListFromServer(waterState);
-
+        if (getRows.wasTableReceived(ConfigurationMixin.C_TABLE_ID)) {
+          _application.userTools.clearConfigurationCache();
+        }
         remoteStatusDto = await getRows.storeRemoteDtoList(remoteDtoList);
         remainingCount = remainingCount - remoteDtoList.length;
         downloadedCount = downloadedCount + remoteDtoList.length;
@@ -270,5 +273,18 @@ class WebService {
       await Future.delayed(Duration(seconds: C_TOAST_WAIT));
     }
     await db.close();
+  }
+
+  void update(UserChangeEnum? userChangeEnum) {
+    this.userChangeEnum=userChangeEnum;
+    if(userChangeEnum==UserChangeEnum.USER_ID || userChangeEnum==UserChangeEnum.WARDEN) {
+      try {
+        _application.userTools.clearConfigurationCache();
+        _application.userTools.clearUserCache();
+      } on SqlException catch(e) {
+        if(e.sqlExceptionEnum==SqlExceptionEnum.ENTRY_NOT_FOUND)
+          print(e);
+    }
+  }
   }
 }

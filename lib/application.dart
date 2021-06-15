@@ -28,8 +28,11 @@ class Application {
 
   init() async {
     await getYaml();
-    serverStatus=ServerStatus.COMPLETE;
     userTools = UserTools();
+    userTools.clearUserCache();
+    userTools.clearConfigurationCache();
+    serverStatus=ServerStatus.COMPLETE;
+
     dbAccess =
         DataBaseAccess(_application.smd, _application.smdSys, userTools);
     defaults = ConfigurationNameDefaults();
