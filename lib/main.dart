@@ -41,8 +41,8 @@ class _MyHomePageState extends State<MyHomePage>
   late Animation colorAnimation;
   late Animation rotateAnimation;
   FocusNode _focusNode = FocusNode();
-  late UserDto _currentUserDto;
-  late UserStoreDto _currentUserStoreDto;
+  UserDto? _currentUserDto;
+  UserStoreDto? _currentUserStoreDto;
   String? _autoCompleteValue;
   List<String> _taskNames = [];
   late Application _application;
@@ -60,8 +60,8 @@ class _MyHomePageState extends State<MyHomePage>
   Future<void> fetchUserData(bool updateEmail) async {
     _currentUserDto = await _application.dbAccess.getCurrentUserDto();
     _currentUserStoreDto = await _application.dbAccess.getCurrentUserStoreDto();
-    if (updateEmail) {
-      String email = _currentUserStoreDto.email.toString();
+    if (updateEmail && _currentUserStoreDto!=null) {
+      String email = _currentUserStoreDto!.email.toString();
       setState(() {
         saveEnabled = email.isEmpty;
       });
@@ -193,7 +193,7 @@ class _MyHomePageState extends State<MyHomePage>
             callback: () async {
               unawaited(_controller.forward());
               await fetchUserData(false);
-              Set tableTypeSet = await intent.syncDatabaseFull(_currentUserDto, _currentUserStoreDto);
+              Set tableTypeSet = await intent.syncDatabaseFull(_currentUserDto!, _currentUserStoreDto!);
               if(tableTypeSet.contains(TaskMixin.C_TABLE_ID)) {
                 _taskNames = await _application.dbAccess.setupDb(_application.defaults);
                 setState(() {}); // Refresh screen

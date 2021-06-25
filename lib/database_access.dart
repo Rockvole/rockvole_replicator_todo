@@ -111,7 +111,7 @@ class DataBaseAccess {
     return taskNames;
   }
 
-  Future<UserDto> getCurrentUserDto() async {
+  Future<UserDto?> getCurrentUserDto() async {
     UserDto? currentUserDto = UserDto.sep(null, null, null, null, null, null);
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
@@ -119,10 +119,10 @@ class DataBaseAccess {
       currentUserDto = await _userTools.getCurrentUserDto(_smd, transaction);
     } catch (e) {}
     await db.close();
-    return currentUserDto!;
+    return currentUserDto;
   }
 
-  Future<UserStoreDto> getCurrentUserStoreDto() async {
+  Future<UserStoreDto?> getCurrentUserStoreDto() async {
     UserStoreDto? currentUserStoreDto =
         UserStoreDto.sep(null, null, null, null, null, null, null, null);
     AbstractDatabase db = await DataBaseAccess.getConnection();
@@ -132,7 +132,7 @@ class DataBaseAccess {
           await _userTools.getCurrentUserStoreDto(_smd, transaction);
     } catch (e) {}
     await db.close();
-    return currentUserStoreDto!;
+    return currentUserStoreDto;
   }
 
   static Future<AbstractDatabase> getConnection() async {

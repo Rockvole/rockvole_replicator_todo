@@ -11,24 +11,21 @@ class WebService extends UserChangeListener {
   static int C_TOAST_WAIT = 5;
   UserChangeEnum? userChangeEnum;
   Application _application;
-  late AbstractWarden warden;
+  late AbstractWarden _warden;
   TransmitStatusDto transmitStatusDto =
       TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
   Set<int> tableTypeSet = Set();
 
-  WebService(
-      this._application) {
-  }
+  WebService(this._application) {}
 
   Future<void> init() async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
-    bool ia=await _application.userTools.isAdmin(_application.smd, transaction);
     if (await _application.userTools.isAdmin(_application.smd, transaction))
-      warden = ClientWardenFactory.getAbstractWarden(
+      _warden = ClientWardenFactory.getAbstractWarden(
           WardenType.ADMIN, WardenType.WRITE_SERVER);
     else
-      warden = ClientWardenFactory.getAbstractWarden(
+      _warden = ClientWardenFactory.getAbstractWarden(
           WardenType.USER, WardenType.READ_SERVER);
     await db.close();
   }
@@ -41,8 +38,8 @@ class WebService extends UserChangeListener {
     late RemoteDto remoteDto;
     late int currentTs;
     RestGetAuthenticationUtils authenticationUtils = RestGetAuthenticationUtils(
-        warden.localWardenType,
-        warden.remoteWardenType,
+        _warden.localWardenType,
+        _warden.remoteWardenType,
         _application.smd,
         _application.smdSys,
         transaction,
@@ -96,7 +93,12 @@ class WebService extends UserChangeListener {
       DbTransaction transaction = await DataBaseAccess.getTransaction();
 
       RestGetLatestRowsUtils getRows = RestGetLatestRowsUtils(
-          warden, _application.smd, _application.smdSys, transaction, _application.userTools, _application.defaults);
+          _warden,
+          _application.smd,
+          _application.smdSys,
+          transaction,
+          _application.userTools,
+          _application.defaults);
       await getRows.init();
       RemoteStatusDto remoteStatusDto;
       do {
@@ -134,13 +136,14 @@ class WebService extends UserChangeListener {
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     late RemoteDto remoteDto;
 
-    WaterLineDao waterLineDao = WaterLineDao.sep(_application.smdSys, transaction);
+    WaterLineDao waterLineDao =
+        WaterLineDao.sep(_application.smdSys, transaction);
     await waterLineDao.init();
     late RestPostNewRowUtils restPostNewRowUtils;
     try {
       restPostNewRowUtils = RestPostNewRowUtils(
-          warden.localWardenType,
-          warden.remoteWardenType,
+          _warden.localWardenType,
+          _warden.remoteWardenType,
           _application.smd,
           _application.smdSys,
           transaction,
@@ -152,9 +155,11 @@ class WebService extends UserChangeListener {
         print("UI $e");
     }
     int? sendMins = await _application.userTools.getConfigurationInteger(
-        _application.smd, transaction, ConfigurationNameEnum.SEND_CHANGES_DELAY_MINS);
+        _application.smd,
+        transaction,
+        ConfigurationNameEnum.SEND_CHANGES_DELAY_MINS);
     ClientWarden clientWarden =
-        ClientWarden(warden.localWardenType, waterLineDao);
+        ClientWarden(_warden.localWardenType, waterLineDao);
     List<WaterLineDto> waterLineList;
     try {
       waterLineList = await clientWarden.getWaterLineListToSend();
@@ -173,7 +178,11 @@ class WebService extends UserChangeListener {
       waterLineDto = waterLineDtoIter.current;
       try {
         remoteDto = await RemoteDtoFactory.getRemoteDtoFromWaterLineDto(
-            waterLineDto, warden.localWardenType, _application.smdSys, transaction, false);
+            waterLineDto,
+            _warden.localWardenType,
+            _application.smdSys,
+            transaction,
+            false);
         if (sendNow ||
             (cts - (sendMins! * 60) >= remoteDto.hcDto.user_ts!) ||
             remoteDto.waterLineDto!.water_state == WaterState.CLIENT_APPROVED ||
@@ -275,16 +284,26 @@ class WebService extends UserChangeListener {
     await db.close();
   }
 
-  void update(UserChangeEnum? userChangeEnum) {
-    this.userChangeEnum=userChangeEnum;
-    if(userChangeEnum==UserChangeEnum.USER_ID || userChangeEnum==UserChangeEnum.WARDEN) {
+  Future<void> update(UserChangeEnum? userChangeEnum) async {
+    this.userChangeEnum = userChangeEnum;
+    if (userChangeEnum == UserChangeEnum.USER_ID ||
+        userChangeEnum == UserChangeEnum.WARDEN) {
       try {
         _application.userTools.clearConfigurationCache();
         _application.userTools.clearUserCache();
-      } on SqlException catch(e) {
-        if(e.sqlExceptionEnum==SqlExceptionEnum.ENTRY_NOT_FOUND)
-          print(e);
+      } on SqlException catch (e) {
+        if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND) print(e);
+      }
+      if (userChangeEnum == UserChangeEnum.WARDEN) {
+        AbstractDatabase db = await DataBaseAccess.getConnection();
+        DbTransaction transaction = await DataBaseAccess.getTransaction();
+        _warden.localWardenType = (await _application.userTools
+                .getCurrentUserDto(_application.smd, transaction))!
+            .warden;
+        if (_warden.localWardenType == WardenType.ADMIN)
+          _warden.remoteWardenType = WardenType.WRITE_SERVER;
+        await db.close();
+      }
     }
-  }
   }
 }
