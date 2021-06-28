@@ -88,7 +88,7 @@ class DataBaseAccess {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
-    AbstractWarden abstractWarden = ClientWardenFactory.getAbstractWarden(
+    AbstractWarden abstractWarden = WardenFactory.getAbstractWarden(
         _localWardenType, _remoteWardenType);
     await abstractWarden.init(TaskMixin.C_TABLE_ID, _smd, _smdSys, transaction);
     HcDto hcDto = HcDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',

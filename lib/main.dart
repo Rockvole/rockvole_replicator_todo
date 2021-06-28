@@ -200,7 +200,10 @@ class _MyHomePageState extends State<MyHomePage>
                 blank();
               }
               if(tableTypeSet.contains(UserMixin.C_TABLE_ID)) {
-                setState(() {}); // Refresh screen
+                bool ia = await _application.dbAccess.isAdmin();
+                setState(() {
+                  _isAdmin=ia;
+                });
                 blank();
               }
               _controller.stop();

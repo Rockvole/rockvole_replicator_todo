@@ -9,9 +9,11 @@ import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 class WebService extends UserChangeListener {
   static int C_VERSION = 1;
   static int C_TOAST_WAIT = 5;
+  bool _cancelled=false;
   UserChangeEnum? userChangeEnum;
   Application _application;
-  late AbstractWarden _warden;
+  WardenType? _localWardenType;
+  WardenType? _remoteWardenType;
   TransmitStatusDto transmitStatusDto =
       TransmitStatusDto(TransmitStatus.DOWNLOAD_STARTED);
   Set<int> tableTypeSet = Set();
@@ -21,12 +23,13 @@ class WebService extends UserChangeListener {
   Future<void> init() async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
-    if (await _application.userTools.isAdmin(_application.smd, transaction))
-      _warden = ClientWardenFactory.getAbstractWarden(
-          WardenType.ADMIN, WardenType.WRITE_SERVER);
-    else
-      _warden = ClientWardenFactory.getAbstractWarden(
-          WardenType.USER, WardenType.READ_SERVER);
+    if (await _application.userTools.isAdmin(_application.smd, transaction)) {
+      _localWardenType=WardenType.ADMIN;
+      _remoteWardenType=WardenType.WRITE_SERVER;
+    } else {
+      _localWardenType=WardenType.USER;
+      _remoteWardenType=WardenType.READ_SERVER;
+    }
     await db.close();
   }
 
@@ -38,8 +41,8 @@ class WebService extends UserChangeListener {
     late RemoteDto remoteDto;
     late int currentTs;
     RestGetAuthenticationUtils authenticationUtils = RestGetAuthenticationUtils(
-        _warden.localWardenType,
-        _warden.remoteWardenType,
+        _localWardenType,
+        _remoteWardenType,
         _application.smd,
         _application.smdSys,
         transaction,
@@ -93,7 +96,8 @@ class WebService extends UserChangeListener {
       DbTransaction transaction = await DataBaseAccess.getTransaction();
 
       RestGetLatestRowsUtils getRows = RestGetLatestRowsUtils(
-          _warden,
+          _localWardenType,
+          _remoteWardenType,
           _application.smd,
           _application.smdSys,
           transaction,
@@ -101,6 +105,7 @@ class WebService extends UserChangeListener {
           _application.defaults);
       await getRows.init();
       RemoteStatusDto remoteStatusDto;
+      _cancelled=false;
       do {
         transmitStatusDto = TransmitStatusDto(TransmitStatus.RECORDS_REMAINING,
             message: remainingCount.toString() + " records to download",
@@ -142,8 +147,8 @@ class WebService extends UserChangeListener {
     late RestPostNewRowUtils restPostNewRowUtils;
     try {
       restPostNewRowUtils = RestPostNewRowUtils(
-          _warden.localWardenType,
-          _warden.remoteWardenType,
+          _localWardenType,
+          _remoteWardenType,
           _application.smd,
           _application.smdSys,
           transaction,
@@ -159,7 +164,7 @@ class WebService extends UserChangeListener {
         transaction,
         ConfigurationNameEnum.SEND_CHANGES_DELAY_MINS);
     ClientWarden clientWarden =
-        ClientWarden(_warden.localWardenType, waterLineDao);
+        ClientWarden(_localWardenType, waterLineDao);
     List<WaterLineDto> waterLineList;
     try {
       waterLineList = await clientWarden.getWaterLineListToSend();
@@ -179,7 +184,7 @@ class WebService extends UserChangeListener {
       try {
         remoteDto = await RemoteDtoFactory.getRemoteDtoFromWaterLineDto(
             waterLineDto,
-            _warden.localWardenType,
+            _localWardenType,
             _application.smdSys,
             transaction,
             false);
@@ -295,14 +300,8 @@ class WebService extends UserChangeListener {
         if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND) print(e);
       }
       if (userChangeEnum == UserChangeEnum.WARDEN) {
-        AbstractDatabase db = await DataBaseAccess.getConnection();
-        DbTransaction transaction = await DataBaseAccess.getTransaction();
-        _warden.localWardenType = (await _application.userTools
-                .getCurrentUserDto(_application.smd, transaction))!
-            .warden;
-        if (_warden.localWardenType == WardenType.ADMIN)
-          _warden.remoteWardenType = WardenType.WRITE_SERVER;
-        await db.close();
+        tableTypeSet.add(UserMixin.C_TABLE_ID);
+        _cancelled=true;
       }
     }
   }
