@@ -12,16 +12,33 @@ import 'dao/TaskMixin.dart';
 class DataBaseAccess {
   SchemaMetaData _smd;
   SchemaMetaData _smdSys;
-  late List<TaskDto> _taskList;
-  late TaskDao _taskDao;
   late UserTools _userTools;
   WardenType _localWardenType = WardenType.USER;
   WardenType _remoteWardenType = WardenType.USER;
 
   DataBaseAccess(this._smd, this._smdSys, this._userTools);
 
-  Future<List<String>> setupDb(ConfigurationNameDefaults defaults) async {
+  Future<List<String>> fetchTaskList(DbTransaction transaction) async {
     List<String> taskNames = [];
+    TaskDao taskDao;
+    // Get list of tasks
+    taskDao = TaskDao(_smd, transaction);
+    await taskDao.init(initTable: false);
+    if ((await taskDao.doesTableExist())) {
+      try {
+        List<TaskDto> taskList = await taskDao.getTaskListByName(null);
+        taskList.forEach((TaskDto taskDto) {
+          taskNames.add(taskDto.task_description!);
+        });
+        taskNames.sort();
+      } on SqlException {}
+    } else {
+      await taskDao.createTable();
+    }
+    return taskNames;
+  }
+
+  Future<List<String>> setupDb(ConfigurationNameDefaults defaults) async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
@@ -41,20 +58,7 @@ class DataBaseAccess {
         await configurationDao.insertDto(configurationDto);
       }
     }
-    // Get list of tasks
-    _taskDao = TaskDao(_smd, transaction);
-    await _taskDao.init(initTable: false);
-    if ((await _taskDao.doesTableExist())) {
-      try {
-        _taskList = await _taskDao.getTaskListByName(null);
-        _taskList.forEach((TaskDto taskDto) {
-          taskNames.add(taskDto.task_description!);
-        });
-        taskNames.sort();
-      } on SqlException {}
-    } else {
-      await _taskDao.createTable();
-    }
+    List<String> taskNames = await fetchTaskList(transaction);
     await db.close();
     return taskNames;
   }
@@ -88,8 +92,8 @@ class DataBaseAccess {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
-    AbstractWarden abstractWarden = WardenFactory.getAbstractWarden(
-        _localWardenType, _remoteWardenType);
+    AbstractWarden abstractWarden =
+        WardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
     await abstractWarden.init(TaskMixin.C_TABLE_ID, _smd, _smdSys, transaction);
     HcDto hcDto = HcDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
         null, TaskMixin.C_TABLE_ID);
