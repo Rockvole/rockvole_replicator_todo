@@ -9,7 +9,6 @@ import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 class WebService extends UserChangeListener {
   static int C_VERSION = 1;
   static int C_TOAST_WAIT = 5;
-  bool _cancelled=false;
   UserChangeEnum? userChangeEnum;
   Application _application;
   WardenType? _localWardenType;
@@ -105,7 +104,6 @@ class WebService extends UserChangeListener {
           _application.defaults);
       await getRows.init();
       RemoteStatusDto remoteStatusDto;
-      _cancelled=false;
       do {
         transmitStatusDto = TransmitStatusDto(TransmitStatus.RECORDS_REMAINING,
             message: remainingCount.toString() + " records to download",
@@ -301,7 +299,6 @@ class WebService extends UserChangeListener {
       }
       if (userChangeEnum == UserChangeEnum.WARDEN) {
         tableTypeSet.add(UserMixin.C_TABLE_ID);
-        _cancelled=true;
       }
     }
   }
