@@ -10,7 +10,7 @@ class AdminPage extends StatefulWidget {
 
 class _AdminPageState extends State<AdminPage> {
   final List<Map> myProducts =
-      List.generate(100000, (index) => {"id": index, "name": "Product $index"})
+      List.generate(1000, (index) => {"id": index, "name": "Product $index"})
           .toList();
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,16 @@ class _AdminPageState extends State<AdminPage> {
         child: ListView.builder(
             itemCount: myProducts.length,
             itemBuilder: (context, position) {
-              return Text(myProducts[position]['name'].toString());
+              return Row(children: [
+                Text(myProducts[position]['name']),
+                Spacer(),
+                IconButton(
+                    onPressed: null,
+                    icon: Icon(Icons.cancel, color: Colors.red)),
+                IconButton(
+                    onPressed: null,
+                    icon: Icon(Icons.check_circle, color: Colors.green))
+              ]);
             }),
       ),
     );
