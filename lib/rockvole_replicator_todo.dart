@@ -1,5 +1,6 @@
 library rockvole_replicator_todo;
 
+export 'admin_page.dart';
 export 'application.dart';
 export 'bus.dart';
 export 'database_access.dart';

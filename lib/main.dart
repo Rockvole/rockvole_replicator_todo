@@ -19,6 +19,9 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
       ),
       home: MyHomePage('Rockvole Replicator Demo'),
+      routes: <String, WidgetBuilder>{
+        "/Admin": (BuildContext context) => AdminPage(),
+      },
       debugShowCheckedModeBanner: false,
     );
   }
@@ -290,7 +293,12 @@ class _MyHomePageState extends State<MyHomePage>
             Row(children: [Expanded(child: Padding(
                 padding: EdgeInsets.all(10.0),
                 child: OutlinedButton(
-                    onPressed: () async {
+                    onPressed: () {
+                      Navigator.of(context)
+                          .pushNamed("/Admin")
+                          .then((value) {
+                        print("Approvals");
+                      });
                     },
                     child: Text('Approvals'))))])
           ],
