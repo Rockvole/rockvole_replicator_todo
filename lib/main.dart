@@ -60,7 +60,7 @@ class _MyHomePageState extends State<MyHomePage>
   Future<void> fetchUserData(bool updateEmail) async {
     _currentUserDto = await _application.dbAccess.getCurrentUserDto();
     _currentUserStoreDto = await _application.dbAccess.getCurrentUserStoreDto();
-    if (updateEmail && _currentUserStoreDto!=null) {
+    if (updateEmail && _currentUserStoreDto != null) {
       String email = _currentUserStoreDto!.email.toString();
       setState(() {
         saveEnabled = email.isEmpty;
@@ -69,7 +69,7 @@ class _MyHomePageState extends State<MyHomePage>
     }
     bool ia = await _application.dbAccess.isAdmin();
     setState(() {
-      _isAdmin=ia;
+      _isAdmin = ia;
     });
   }
 
@@ -148,9 +148,8 @@ class _MyHomePageState extends State<MyHomePage>
           return Align(
             alignment: Alignment.topLeft,
             child: Material(
-              elevation: 4.0,
               child: SizedBox(
-                height: 300.0,
+                height: 420.0,
                 child: ListView(
                   children: options
                       .map((Object option) => GestureDetector(
@@ -193,16 +192,18 @@ class _MyHomePageState extends State<MyHomePage>
             callback: () async {
               unawaited(_controller.forward());
               await fetchUserData(false);
-              Set tableTypeSet = await intent.syncDatabaseFull(_currentUserDto!, _currentUserStoreDto!);
-              if(tableTypeSet.contains(TaskMixin.C_TABLE_ID)) {
-                _taskNames = await _application.dbAccess.setupDb(_application.defaults);
+              Set tableTypeSet = await intent.syncDatabaseFull(
+                  _currentUserDto!, _currentUserStoreDto!);
+              if (tableTypeSet.contains(TaskMixin.C_TABLE_ID)) {
+                _taskNames =
+                    await _application.dbAccess.setupDb(_application.defaults);
                 setState(() {}); // Refresh screen
                 blank();
               }
-              if(tableTypeSet.contains(UserMixin.C_TABLE_ID)) {
+              if (tableTypeSet.contains(UserMixin.C_TABLE_ID)) {
                 bool ia = await _application.dbAccess.isAdmin();
                 setState(() {
-                  _isAdmin=ia;
+                  _isAdmin = ia;
                 });
                 blank();
               }
@@ -276,8 +277,8 @@ class _MyHomePageState extends State<MyHomePage>
                       onPressed: () async {
                         String text = _textEditingController.text;
                         if (_autoCompleteValue != null)
-                          _taskNames = await _application.dbAccess.addTask(
-                              _autoCompleteValue!, false, _taskNames);
+                          _taskNames = await _application.dbAccess
+                              .addTask(_autoCompleteValue!, false, _taskNames);
                         blank();
                         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                           content: Text("Adding $text"),
@@ -285,6 +286,13 @@ class _MyHomePageState extends State<MyHomePage>
                       },
                       child: Text('Add')))
             ]),
+            Spacer(),
+            Row(children: [Expanded(child: Padding(
+                padding: EdgeInsets.all(10.0),
+                child: OutlinedButton(
+                    onPressed: () async {
+                    },
+                    child: Text('Approvals'))))])
           ],
         ),
       ),
