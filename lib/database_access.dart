@@ -38,6 +38,24 @@ class DataBaseAccess {
     return taskNames;
   }
 
+  Future<List<TaskHcDto>> fetchTaskHcList(DbTransaction transaction) async {
+    List<TaskHcDto> taskHcDtoList = [];
+    TaskHcDao taskHcDao;
+    TaskHcDto taskHcDto;
+    taskHcDao = TaskHcDao(_smdSys, transaction);
+    await taskHcDao.init(initTable: false);
+
+    WaterLineDao waterLineDao = WaterLineDao.sep(_smdSys, transaction);
+    List<WaterLineDto> waterLineDtoList =
+        await waterLineDao.getWaterLineByTableType(
+            TaskMixin.C_TABLE_ID, WaterState.SERVER_PENDING, null);
+    waterLineDtoList.forEach((WaterLineDto waterLineDto) async {
+      taskHcDto = await taskHcDao.getTaskHcDtoByTs(waterLineDto.water_ts!);
+      taskHcDtoList.add(taskHcDto);
+    });
+    return taskHcDtoList;
+  }
+
   Future<List<String>> setupDb(ConfigurationNameDefaults defaults) async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();

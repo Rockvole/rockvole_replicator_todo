@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:rockvole_db/rockvole_transactions.dart';
+import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 
 class AdminPage extends StatefulWidget {
   AdminPage({Key? key, this.title}) : super(key: key);
@@ -8,18 +10,12 @@ class AdminPage extends StatefulWidget {
   _AdminPageState createState() => _AdminPageState();
 }
 
-class TaskStruct {
-  int id;
-  String taskName;
-  TaskStruct(this.id, this.taskName);
-}
-
 class _AdminPageState extends State<AdminPage> {
 
-  Future<List<TaskStruct>> fetchTasks() async {
-    final List<TaskStruct> tasks =
-        List.generate(1000, (index) => TaskStruct(index, "Product $index"));
-    return tasks;
+  Future<List<TaskHcDto>> fetchTasks() async {
+    final List<TaskHcDto> taskHcDtoList =
+        List.generate(1000, (index) => TaskHcDto.sep(index, "Product $index", false, null));
+    return taskHcDtoList;
   }
 
   @override
@@ -31,16 +27,16 @@ class _AdminPageState extends State<AdminPage> {
         ),
         body: Padding(
             padding: EdgeInsets.all(8),
-            child: FutureBuilder<List<TaskStruct>>(
+            child: FutureBuilder<List<TaskHcDto>>(
                 future: fetchTasks(),
                 initialData: [],
                 builder: (BuildContext context,
-                    AsyncSnapshot<List<TaskStruct>> snapshot) {
+                    AsyncSnapshot<List<TaskHcDto>> snapshot) {
                   return ListView.builder(
                       itemCount: snapshot.data!.length,
                       itemBuilder: (context, position) {
                         return Row(children: [
-                          Text(snapshot.data![position].taskName),
+                          Text(snapshot.data![position].task_description!),
                           Spacer(),
                           IconButton(
                               onPressed: null,
