@@ -5,24 +5,20 @@ import 'package:rockvole_db/rockvole_web_services.dart';
 import 'package:rockvole_db/rockvole_sqflite.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'dao/TaskDao.dart';
-import 'dao/TaskHcDao.dart';
-import 'dao/TaskMixin.dart';
+import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 
 class DataBaseAccess {
-  SchemaMetaData _smd;
-  SchemaMetaData _smdSys;
-  late UserTools _userTools;
+  Application _application;
   WardenType _localWardenType = WardenType.USER;
   WardenType _remoteWardenType = WardenType.USER;
 
-  DataBaseAccess(this._smd, this._smdSys, this._userTools);
+  DataBaseAccess(this._application);
 
   Future<List<String>> fetchTaskList(DbTransaction transaction) async {
     List<String> taskNames = [];
     TaskDao taskDao;
     // Get list of tasks
-    taskDao = TaskDao(_smd, transaction);
+    taskDao = TaskDao(_application.smd, transaction);
     await taskDao.init(initTable: false);
     if ((await taskDao.doesTableExist())) {
       try {
@@ -42,10 +38,11 @@ class DataBaseAccess {
     List<TaskHcDto> taskHcDtoList = [];
     TaskHcDao taskHcDao;
     TaskHcDto taskHcDto;
-    taskHcDao = TaskHcDao(_smdSys, transaction);
+    taskHcDao = TaskHcDao(_application.smdSys, transaction);
     await taskHcDao.init(initTable: false);
 
-    WaterLineDao waterLineDao = WaterLineDao.sep(_smdSys, transaction);
+    WaterLineDao waterLineDao =
+        WaterLineDao.sep(_application.smdSys, transaction);
     List<WaterLineDto> waterLineDtoList =
         await waterLineDao.getWaterLineByTableType(
             TaskMixin.C_TABLE_ID, WaterState.SERVER_PENDING, null);
@@ -63,7 +60,7 @@ class DataBaseAccess {
     // Initialise Configuration table
     ConfigurationDto configurationDto;
     ConfigurationDao configurationDao =
-        ConfigurationDao(_smd, transaction, defaults);
+        ConfigurationDao(_application.smd, transaction, defaults);
     await configurationDao.init(initTable: false);
     await configurationDao.insertDefaultValues();
     try {
@@ -86,21 +83,22 @@ class DataBaseAccess {
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
     // Put default values in User table
-    UserDao userDao = UserDao(_smd, transaction);
+    UserDao userDao = UserDao(_application.smd, transaction);
     await userDao.init();
 
     UserDto userDto = UserDto.sep(null, null, 0, WardenType.USER, 0, 0);
     int? cuId = await userDao.addDto(userDto, _localWardenType);
 
     // Put default values in User Store table
-    UserStoreDao userStoreDao = UserStoreDao(_smd, transaction);
+    UserStoreDao userStoreDao = UserStoreDao(_application.smd, transaction);
     await userStoreDao.init();
 
     UserStoreDto userStoreDto =
         UserStoreDto.sep(cuId, email, 0, 'User', 'User', 0, 0, 0);
     await userStoreDao.insertDto(userStoreDto);
 
-    await _userTools.setCurrentUserId(_smd, transaction, cuId!);
+    await _application.userTools
+        .setCurrentUserId(_application.smd, transaction, cuId!);
 
     await db.close();
   }
@@ -112,15 +110,16 @@ class DataBaseAccess {
 
     AbstractWarden abstractWarden =
         WardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
-    await abstractWarden.init(TaskMixin.C_TABLE_ID, _smd, _smdSys, transaction);
+    await abstractWarden.init(TaskMixin.C_TABLE_ID, _application.smd,
+        _application.smdSys, transaction);
     HcDto hcDto = HcDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
         null, TaskMixin.C_TABLE_ID);
     TaskHcDto taskHcDto =
         TaskHcDto.sep(null, task_description, task_complete, hcDto);
     AbstractTableTransactions tableTransactions =
         TableTransactions.sep(taskHcDto, TaskMixin.C_TABLE_ID);
-    await tableTransactions.init(
-        _localWardenType, _remoteWardenType, _smd, _smdSys, transaction);
+    await tableTransactions.init(_localWardenType, _remoteWardenType,
+        _application.smd, _application.smdSys, transaction);
     abstractWarden.initialize(tableTransactions);
     try {
       await abstractWarden.write();
@@ -138,7 +137,8 @@ class DataBaseAccess {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     try {
-      currentUserDto = await _userTools.getCurrentUserDto(_smd, transaction);
+      currentUserDto = await _application.userTools
+          .getCurrentUserDto(_application.smd, transaction);
     } catch (e) {}
     await db.close();
     return currentUserDto;
@@ -150,8 +150,8 @@ class DataBaseAccess {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     try {
-      currentUserStoreDto =
-          await _userTools.getCurrentUserStoreDto(_smd, transaction);
+      currentUserStoreDto = await _application.userTools
+          .getCurrentUserStoreDto(_application.smd, transaction);
     } catch (e) {}
     await db.close();
     return currentUserStoreDto;
@@ -173,7 +173,8 @@ class DataBaseAccess {
   Future<bool> isAdmin() async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
-    bool isAdmin = await _userTools.isAdmin(_smd, transaction);
+    bool isAdmin =
+        await _application.userTools.isAdmin(_application.smd, transaction);
     await db.close();
     return isAdmin;
   }
