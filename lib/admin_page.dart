@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:rockvole_db/rockvole_transactions.dart';
+import 'package:rockvole_db/rockvole_db.dart';
 import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 
 class AdminPage extends StatefulWidget {
@@ -11,11 +11,20 @@ class AdminPage extends StatefulWidget {
 }
 
 class _AdminPageState extends State<AdminPage> {
+  late Application _application;
 
   Future<List<TaskHcDto>> fetchTasks() async {
-    final List<TaskHcDto> taskHcDtoList =
-        List.generate(1000, (index) => TaskHcDto.sep(index, "Product $index", false, null));
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+    List<TaskHcDto> taskHcDtoList = await _application.dbAccess.fetchTaskHcList(transaction);
+    await db.close();
     return taskHcDtoList;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _application = Application();
   }
 
   @override

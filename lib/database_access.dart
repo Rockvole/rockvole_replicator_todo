@@ -43,9 +43,14 @@ class DataBaseAccess {
 
     WaterLineDao waterLineDao =
         WaterLineDao.sep(_application.smdSys, transaction);
-    List<WaterLineDto> waterLineDtoList =
-        await waterLineDao.getWaterLineByTableType(
-            TaskMixin.C_TABLE_ID, WaterState.SERVER_PENDING, null);
+    await waterLineDao.init();
+    List<WaterLineDto> waterLineDtoList = [];
+    try {
+      waterLineDtoList = await waterLineDao.getWaterLineByTableType(
+          TaskMixin.C_TABLE_ID, WaterState.SERVER_PENDING, null);
+    } on SqlException catch (e) {
+      if (e.sqlExceptionEnum != SqlExceptionEnum.ENTRY_NOT_FOUND) rethrow;
+    }
     waterLineDtoList.forEach((WaterLineDto waterLineDto) async {
       taskHcDto = await taskHcDao.getTaskHcDtoByTs(waterLineDto.water_ts!);
       taskHcDtoList.add(taskHcDto);

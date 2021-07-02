@@ -34,7 +34,7 @@ class Application {
     serverStatus=ServerStatus.COMPLETE;
 
     dbAccess =
-        DataBaseAccess(_application.smd, _application.smdSys, userTools);
+        DataBaseAccess(_application);
     defaults = ConfigurationNameDefaults();
     bus = Bus(_application);
   }
