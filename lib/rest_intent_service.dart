@@ -33,7 +33,7 @@ class RestIntentService {
         await _webService.authenticateUser(WaterState.SERVER_PENDING, true);
         if (authenticationDto != null)
           await _webService.downloadRows(
-              WaterState.SERVER_APPROVED, authenticationDto.newRecords!);
+              WaterState.SERVER_PENDING, authenticationDto.newRecords!);
       }
     } on TransmitStatusException catch (e) {
       print(e.cause);
@@ -46,7 +46,7 @@ class RestIntentService {
           message = e.sourceName;
           break;
         case TransmitStatus.USER_UPDATED:
-        //AlarmReceiver.correctAlarmRange(this, false, application);
+          //AlarmReceiver.correctAlarmRange(this, false, application);
           break;
         default:
       }
