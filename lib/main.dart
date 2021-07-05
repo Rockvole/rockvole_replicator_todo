@@ -290,7 +290,8 @@ class _MyHomePageState extends State<MyHomePage>
                       child: Text('Add')))
             ]),
             Spacer(),
-            Row(children: [Expanded(child: Padding(
+            Visibility(visible: _isAdmin,
+                child: Row(children: [Expanded(child: Padding(
                 padding: EdgeInsets.all(10.0),
                 child: OutlinedButton(
                     onPressed: () {
@@ -300,7 +301,7 @@ class _MyHomePageState extends State<MyHomePage>
                         print("Approvals");
                       });
                     },
-                    child: Text('Approvals'))))])
+                    child: Text('Approvals'))))]))
           ],
         ),
       ),
