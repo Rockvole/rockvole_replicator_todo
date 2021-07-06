@@ -51,10 +51,12 @@ class DataBaseAccess {
     } on SqlException catch (e) {
       if (e.sqlExceptionEnum != SqlExceptionEnum.ENTRY_NOT_FOUND) rethrow;
     }
-    waterLineDtoList.forEach((WaterLineDto waterLineDto) async {
+    Iterator<WaterLineDto> iter = waterLineDtoList.iterator;
+    while(iter.moveNext()) {
+      WaterLineDto waterLineDto=iter.current;
       taskHcDto = await taskHcDao.getTaskHcDtoByTs(waterLineDto.water_ts!);
       taskHcDtoList.add(taskHcDto);
-    });
+    }
     return taskHcDtoList;
   }
 
