@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:rockvole_db/rockvole_db.dart';
+import 'package:rockvole_db/rockvole_transactions.dart';
 import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';
 
 class AdminPage extends StatefulWidget {
@@ -16,8 +17,9 @@ class _AdminPageState extends State<AdminPage> {
   Future<List<TaskHcDto>?> fetchTasks() async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
-    List<TaskHcDto>? taskHcDtoList = await _application.dbAccess.fetchTaskHcList(transaction);
-    if(taskHcDtoList.length==0) taskHcDtoList=null;
+    List<TaskHcDto>? taskHcDtoList =
+        await _application.dbAccess.fetchTaskHcList(transaction);
+    if (taskHcDtoList.length == 0) taskHcDtoList = null;
     await db.close();
     return taskHcDtoList;
   }
@@ -42,7 +44,7 @@ class _AdminPageState extends State<AdminPage> {
                 initialData: [],
                 builder: (BuildContext context,
                     AsyncSnapshot<List<TaskHcDto>?> snapshot) {
-                  if(snapshot.hasData) {
+                  if (snapshot.hasData) {
                     return ListView.builder(
                         itemCount: snapshot.data!.length,
                         itemBuilder: (context, position) {
@@ -50,16 +52,29 @@ class _AdminPageState extends State<AdminPage> {
                             Text(snapshot.data![position].task_description!),
                             Spacer(),
                             IconButton(
-                                onPressed: null,
+                                onPressed: () async {
+                                  WaterLineDto? waterLineDto =
+                                      await _application.dbAccess
+                                          .setWaterLineState(
+                                              snapshot.data![position].ts!,
+                                              WaterState.CLIENT_REJECTED);
+                                  await _application.dbAccess
+                                      .cleanRows(waterLineDto);
+                                },
                                 icon: Icon(Icons.cancel, color: Colors.red)),
                             IconButton(
-                                onPressed: null,
-                                icon:
-                                Icon(Icons.check_circle, color: Colors.green))
+                                onPressed: () async {
+                                  await _application.dbAccess.setWaterLineState(
+                                      snapshot.data![position].ts!,
+                                      WaterState.CLIENT_APPROVED);
+                                },
+                                icon: Icon(Icons.check_circle,
+                                    color: Colors.green))
                           ]);
                         });
                   } else {
-                    return Text("No items for Approval / Rejections found", style: TextStyle(fontSize: 18));
+                    return Text("No items for Approval / Rejections found",
+                        style: TextStyle(fontSize: 18));
                   }
                 })));
   }

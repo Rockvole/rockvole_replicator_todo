@@ -52,12 +52,51 @@ class DataBaseAccess {
       if (e.sqlExceptionEnum != SqlExceptionEnum.ENTRY_NOT_FOUND) rethrow;
     }
     Iterator<WaterLineDto> iter = waterLineDtoList.iterator;
-    while(iter.moveNext()) {
-      WaterLineDto waterLineDto=iter.current;
+    while (iter.moveNext()) {
+      WaterLineDto waterLineDto = iter.current;
       taskHcDto = await taskHcDao.getTaskHcDtoByTs(waterLineDto.water_ts!);
       taskHcDtoList.add(taskHcDto);
     }
     return taskHcDtoList;
+  }
+
+  Future<WaterLineDto?> setWaterLineState(
+      int ts, WaterState localStateType) async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+
+    WaterLineDao waterLineDao =
+        WaterLineDao.sep(_application.smdSys, transaction);
+    WaterLineDto? waterLineDto;
+    WaterLine waterLine =
+        WaterLine(waterLineDao, _application.smdSys, transaction);
+    try {
+      waterLineDto = await waterLine.retrieveByTs(ts);
+      waterLine.setWaterState(localStateType);
+      await waterLine.updateRow();
+    } on SqlException catch (e) {
+      if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND ||
+          e.sqlExceptionEnum == SqlExceptionEnum.FAILED_UPDATE ||
+          e.sqlExceptionEnum == SqlExceptionEnum.FAILED_SELECT)
+        print("UI $e");
+      else
+        rethrow;
+    } finally {
+      await db.close();
+    }
+    return waterLineDto;
+  }
+
+  Future<void> cleanRows(WaterLineDto? waterLineDto) async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+    try {
+      CleanTables cleanTables =
+          CleanTables(_application.smd, _application.smdSys, transaction);
+      await cleanTables.deleteRow(waterLineDto!, true, false, false);
+    } finally {
+      await db.close();
+    }
   }
 
   Future<List<String>> setupDb(ConfigurationNameDefaults defaults) async {
