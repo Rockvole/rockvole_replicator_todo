@@ -60,6 +60,7 @@ class _AdminPageState extends State<AdminPage> {
                                               WaterState.CLIENT_REJECTED);
                                   await _application.dbAccess
                                       .cleanRows(waterLineDto);
+                                  setState(() { });
                                 },
                                 icon: Icon(Icons.cancel, color: Colors.red)),
                             IconButton(
@@ -67,6 +68,7 @@ class _AdminPageState extends State<AdminPage> {
                                   await _application.dbAccess.setWaterLineState(
                                       snapshot.data![position].ts!,
                                       WaterState.CLIENT_APPROVED);
+                                  setState(() { });
                                 },
                                 icon: Icon(Icons.check_circle,
                                     color: Colors.green))

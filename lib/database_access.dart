@@ -67,6 +67,7 @@ class DataBaseAccess {
 
     WaterLineDao waterLineDao =
         WaterLineDao.sep(_application.smdSys, transaction);
+    await waterLineDao.init();
     WaterLineDto? waterLineDto;
     WaterLine waterLine =
         WaterLine(waterLineDao, _application.smdSys, transaction);
@@ -93,6 +94,7 @@ class DataBaseAccess {
     try {
       CleanTables cleanTables =
           CleanTables(_application.smd, _application.smdSys, transaction);
+      await cleanTables.init();
       await cleanTables.deleteRow(waterLineDto!, true, false, false);
     } finally {
       await db.close();
