@@ -17,11 +17,11 @@ class _AdminPageState extends State<AdminPage> {
   Future<List<TaskTrDto>?> fetchTasks() async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
-    List<TaskTrDto>? taskHcDtoList =
+    List<TaskTrDto>? taskTrDtoList =
         await _application.dbAccess.fetchTaskTrList(transaction);
-    if (taskHcDtoList.length == 0) taskHcDtoList = null;
+    if (taskTrDtoList.length == 0) taskTrDtoList = null;
     await db.close();
-    return taskHcDtoList;
+    return taskTrDtoList;
   }
 
   @override

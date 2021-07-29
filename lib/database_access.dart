@@ -35,11 +35,11 @@ class DataBaseAccess {
   }
 
   Future<List<TaskTrDto>> fetchTaskTrList(DbTransaction transaction) async {
-    List<TaskTrDto> taskHcDtoList = [];
-    TaskTrDao taskHcDao;
-    TaskTrDto taskHcDto;
-    taskHcDao = TaskTrDao(_application.smdSys, transaction);
-    await taskHcDao.init(initTable: false);
+    List<TaskTrDto> taskTrDtoList = [];
+    TaskTrDao taskTrDao;
+    TaskTrDto taskTrDto;
+    taskTrDao = TaskTrDao(_application.smdSys, transaction);
+    await taskTrDao.init(initTable: false);
 
     WaterLineDao waterLineDao =
         WaterLineDao.sep(_application.smdSys, transaction);
@@ -54,10 +54,10 @@ class DataBaseAccess {
     Iterator<WaterLineDto> iter = waterLineDtoList.iterator;
     while (iter.moveNext()) {
       WaterLineDto waterLineDto = iter.current;
-      taskHcDto = await taskHcDao.getTaskTrDtoByTs(waterLineDto.water_ts!);
-      taskHcDtoList.add(taskHcDto);
+      taskTrDto = await taskTrDao.getTaskTrDtoByTs(waterLineDto.water_ts!);
+      taskTrDtoList.add(taskTrDto);
     }
-    return taskHcDtoList;
+    return taskTrDtoList;
   }
 
   Future<WaterLineDto?> setWaterLineState(
@@ -160,12 +160,12 @@ class DataBaseAccess {
         WardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
     await abstractWarden.init(TaskMixin.C_TABLE_ID, _application.smd,
         _application.smdSys, transaction);
-    TrDto hcDto = TrDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
+    TrDto trDto = TrDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
         null, TaskMixin.C_TABLE_ID);
-    TaskTrDto taskHcDto =
-        TaskTrDto.sep(null, task_description, task_complete, hcDto);
+    TaskTrDto taskTrDto =
+        TaskTrDto.sep(null, task_description, task_complete, trDto);
     AbstractTableTransactions tableTransactions =
-        TableTransactions.sep(taskHcDto);
+        TableTransactions.sep(taskTrDto);
     await tableTransactions.init(_localWardenType, _remoteWardenType,
         _application.smd, _application.smdSys, transaction);
     abstractWarden.initialize(tableTransactions);

@@ -233,7 +233,7 @@ class WebService extends UserChangeListener {
           if (e1.remoteStatus != null) {
             switch (e1.remoteStatus) {
               case RemoteStatus.EMAIL_ALREADY_EXISTS:
-                //RevertChangesOttoDto revertChangesOttoDto = new RevertChangesOttoDto(remoteDto.getHcDto().getTs());
+                //RevertChangesOttoDto revertChangesOttoDto = new RevertChangesOttoDto(remoteDto.getTrDto().getTs());
                 //FoodApplication.getEventBus().post(revertChangesOttoDto);
                 throw TransmitStatusException(null,
                     cause: "E-Mail Address Already Exists",
