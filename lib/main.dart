@@ -64,7 +64,9 @@ class _MyHomePageState extends State<MyHomePage>
     _currentUserDto = await _application.dbAccess.getCurrentUserDto();
     _currentUserStoreDto = await _application.dbAccess.getCurrentUserStoreDto();
     if (updateEmail && _currentUserStoreDto != null) {
-      String email = _currentUserStoreDto!.email.toString();
+      String email = _currentUserStoreDto!.email != null
+          ? _currentUserStoreDto!.email.toString()
+          : "";
       setState(() {
         saveEnabled = email.isEmpty;
       });
@@ -290,18 +292,22 @@ class _MyHomePageState extends State<MyHomePage>
                       child: Text('Add')))
             ]),
             Spacer(),
-            Visibility(visible: _isAdmin,
-                child: Row(children: [Expanded(child: Padding(
-                padding: EdgeInsets.all(10.0),
-                child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context)
-                          .pushNamed("/Admin")
-                          .then((value) {
-                        print("Approvals");
-                      });
-                    },
-                    child: Text('Approvals'))))]))
+            Visibility(
+                visible: _isAdmin,
+                child: Row(children: [
+                  Expanded(
+                      child: Padding(
+                          padding: EdgeInsets.all(10.0),
+                          child: OutlinedButton(
+                              onPressed: () {
+                                Navigator.of(context)
+                                    .pushNamed("/Admin")
+                                    .then((value) {
+                                  print("Approvals");
+                                });
+                              },
+                              child: Text('Approvals'))))
+                ]))
           ],
         ),
       ),

@@ -14,6 +14,132 @@ class DataBaseAccess {
 
   DataBaseAccess(this._application);
 
+  Future<List<String>> setupDb(ConfigurationNameDefaults defaults) async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+
+    // Initialise Configuration table
+    ConfigurationDto configurationDto;
+    ConfigurationDao configurationDao =
+    ConfigurationDao(_application.smd, transaction, defaults);
+    await configurationDao.init(initTable: false);
+    await configurationDao.insertDefaultValues();
+    try {
+      configurationDto = await configurationDao.getConfigurationDtoByUnique(
+          0, WardenType.USER, ConfigurationNameEnum.WEB_URL, 0);
+    } on SqlException catch (e) {
+      if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND) {
+        configurationDto = ConfigurationDto.sep(null, 0, WardenType.USER,
+            ConfigurationNameEnum.WEB_URL, 0, null, '10.0.2.2', defaults);
+        await configurationDao.insertDto(configurationDto);
+      }
+    }
+    List<String> taskNames = await fetchTaskList(transaction);
+    await db.close();
+    return taskNames;
+  }
+
+  Future<void> storeUser(String email) async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+
+    // Put default values in User table
+    UserDao userDao = UserDao(_application.smd, transaction);
+    await userDao.init();
+
+    UserDto userDto = UserDto.sep(null, null, 0, WardenType.USER, 0, 0);
+    int? cuId = await userDao.addDto(userDto, _localWardenType);
+
+    // Put default values in User Store table
+    UserStoreDao userStoreDao = UserStoreDao(_application.smd, transaction);
+    await userStoreDao.init();
+
+    UserStoreDto userStoreDto =
+    UserStoreDto.sep(cuId, email, 0, 'User', 'User', 0, 0, 0);
+    await userStoreDao.insertDto(userStoreDto);
+
+    await _application.userTools
+        .setCurrentUserId(_application.smd, transaction, cuId!);
+
+    await db.close();
+  }
+
+  Future<List<String>> addTask(String task_description, bool task_complete,
+      List<String> taskNames) async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+
+    AbstractWarden abstractWarden =
+    WardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
+    await abstractWarden.init(TaskMixin.C_TABLE_ID, _application.smd,
+        _application.smdSys, transaction);
+    TrDto trDto = TrDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
+        null, TaskMixin.C_TABLE_ID);
+    TaskTrDto taskTrDto =
+    TaskTrDto.sep(null, task_description, task_complete, trDto);
+    AbstractTableTransactions tableTransactions =
+    TableTransactions.sep(taskTrDto);
+    await tableTransactions.init(_localWardenType, _remoteWardenType,
+        _application.smd, _application.smdSys, transaction);
+    abstractWarden.initialize(tableTransactions);
+    try {
+      await abstractWarden.write();
+      taskNames.add(task_description);
+      taskNames.sort();
+    } on SqlException catch (e) {
+      print(e);
+    }
+    await db.close();
+    return taskNames;
+  }
+
+  Future<UserDto?> getCurrentUserDto() async {
+    UserDto? currentUserDto = UserDto.sep(null, null, null, null, null, null);
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+    try {
+      currentUserDto = await _application.userTools
+          .getCurrentUserDto(_application.smd, transaction);
+    } catch (e) {}
+    await db.close();
+    return currentUserDto;
+  }
+
+  Future<UserStoreDto?> getCurrentUserStoreDto() async {
+    UserStoreDto? currentUserStoreDto =
+    UserStoreDto.sep(null, null, null, null, null, null, null, null);
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+    try {
+      currentUserStoreDto = await _application.userTools
+          .getCurrentUserStoreDto(_application.smd, transaction);
+    } catch (e) {}
+    await db.close();
+    return currentUserStoreDto;
+  }
+
+  static Future<AbstractDatabase> getConnection() async {
+    var databasesPath = (await getDatabasesPath()).toString() + "/task_data.db";
+    AbstractDatabase db = SqfliteDatabase.filename(databasesPath);
+    await db.connect();
+    return db;
+  }
+
+  static Future<DbTransaction> getTransaction() async {
+    DbTransaction transaction = await SqfliteHelper.getSqfliteDbTransaction(
+        'task_data', (await getDatabasesPath()).toString());
+    return transaction;
+  }
+
+  Future<bool> isAdmin() async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+    bool isAdmin =
+    await _application.userTools.isAdmin(_application.smd, transaction);
+    await db.close();
+    return isAdmin;
+  }
+
   Future<List<String>> fetchTaskList(DbTransaction transaction) async {
     List<String> taskNames = [];
     TaskDao taskDao;
@@ -99,131 +225,5 @@ class DataBaseAccess {
     } finally {
       await db.close();
     }
-  }
-
-  Future<List<String>> setupDb(ConfigurationNameDefaults defaults) async {
-    AbstractDatabase db = await DataBaseAccess.getConnection();
-    DbTransaction transaction = await DataBaseAccess.getTransaction();
-
-    // Initialise Configuration table
-    ConfigurationDto configurationDto;
-    ConfigurationDao configurationDao =
-        ConfigurationDao(_application.smd, transaction, defaults);
-    await configurationDao.init(initTable: false);
-    await configurationDao.insertDefaultValues();
-    try {
-      configurationDto = await configurationDao.getConfigurationDtoByUnique(
-          0, WardenType.USER, ConfigurationNameEnum.WEB_URL, 0);
-    } on SqlException catch (e) {
-      if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND) {
-        configurationDto = ConfigurationDto.sep(null, 0, WardenType.USER,
-            ConfigurationNameEnum.WEB_URL, 0, null, '10.0.2.2', defaults);
-        await configurationDao.insertDto(configurationDto);
-      }
-    }
-    List<String> taskNames = await fetchTaskList(transaction);
-    await db.close();
-    return taskNames;
-  }
-
-  Future<void> storeUser(String email) async {
-    AbstractDatabase db = await DataBaseAccess.getConnection();
-    DbTransaction transaction = await DataBaseAccess.getTransaction();
-
-    // Put default values in User table
-    UserDao userDao = UserDao(_application.smd, transaction);
-    await userDao.init();
-
-    UserDto userDto = UserDto.sep(null, null, 0, WardenType.USER, 0, 0);
-    int? cuId = await userDao.addDto(userDto, _localWardenType);
-
-    // Put default values in User Store table
-    UserStoreDao userStoreDao = UserStoreDao(_application.smd, transaction);
-    await userStoreDao.init();
-
-    UserStoreDto userStoreDto =
-        UserStoreDto.sep(cuId, email, 0, 'User', 'User', 0, 0, 0);
-    await userStoreDao.insertDto(userStoreDto);
-
-    await _application.userTools
-        .setCurrentUserId(_application.smd, transaction, cuId!);
-
-    await db.close();
-  }
-
-  Future<List<String>> addTask(String task_description, bool task_complete,
-      List<String> taskNames) async {
-    AbstractDatabase db = await DataBaseAccess.getConnection();
-    DbTransaction transaction = await DataBaseAccess.getTransaction();
-
-    AbstractWarden abstractWarden =
-        WardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
-    await abstractWarden.init(TaskMixin.C_TABLE_ID, _application.smd,
-        _application.smdSys, transaction);
-    TrDto trDto = TrDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
-        null, TaskMixin.C_TABLE_ID);
-    TaskTrDto taskTrDto =
-        TaskTrDto.sep(null, task_description, task_complete, trDto);
-    AbstractTableTransactions tableTransactions =
-        TableTransactions.sep(taskTrDto);
-    await tableTransactions.init(_localWardenType, _remoteWardenType,
-        _application.smd, _application.smdSys, transaction);
-    abstractWarden.initialize(tableTransactions);
-    try {
-      await abstractWarden.write();
-      taskNames.add(task_description);
-      taskNames.sort();
-    } on SqlException catch (e) {
-      print(e);
-    }
-    await db.close();
-    return taskNames;
-  }
-
-  Future<UserDto?> getCurrentUserDto() async {
-    UserDto? currentUserDto = UserDto.sep(null, null, null, null, null, null);
-    AbstractDatabase db = await DataBaseAccess.getConnection();
-    DbTransaction transaction = await DataBaseAccess.getTransaction();
-    try {
-      currentUserDto = await _application.userTools
-          .getCurrentUserDto(_application.smd, transaction);
-    } catch (e) {}
-    await db.close();
-    return currentUserDto;
-  }
-
-  Future<UserStoreDto?> getCurrentUserStoreDto() async {
-    UserStoreDto? currentUserStoreDto =
-        UserStoreDto.sep(null, null, null, null, null, null, null, null);
-    AbstractDatabase db = await DataBaseAccess.getConnection();
-    DbTransaction transaction = await DataBaseAccess.getTransaction();
-    try {
-      currentUserStoreDto = await _application.userTools
-          .getCurrentUserStoreDto(_application.smd, transaction);
-    } catch (e) {}
-    await db.close();
-    return currentUserStoreDto;
-  }
-
-  static Future<AbstractDatabase> getConnection() async {
-    var databasesPath = (await getDatabasesPath()).toString() + "/task_data.db";
-    AbstractDatabase db = SqfliteDatabase.filename(databasesPath);
-    await db.connect();
-    return db;
-  }
-
-  static Future<DbTransaction> getTransaction() async {
-    DbTransaction transaction = await SqfliteHelper.getSqfliteDbTransaction(
-        'task_data', (await getDatabasesPath()).toString());
-    return transaction;
-  }
-
-  Future<bool> isAdmin() async {
-    AbstractDatabase db = await DataBaseAccess.getConnection();
-    DbTransaction transaction = await DataBaseAccess.getTransaction();
-    bool isAdmin =
-        await _application.userTools.isAdmin(_application.smd, transaction);
-    await db.close();
-    return isAdmin;
   }
 }
