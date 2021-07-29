@@ -187,7 +187,7 @@ class WebService extends UserChangeListener {
             transaction,
             false);
         if (sendNow ||
-            (cts - (sendMins! * 60) >= remoteDto.hcDto.user_ts!) ||
+            (cts - (sendMins! * 60) >= remoteDto.trDto.user_ts!) ||
             remoteDto.waterLineDto!.water_state == WaterState.CLIENT_APPROVED ||
             remoteDto.waterLineDto!.water_state == WaterState.CLIENT_REJECTED) {
           remoteDtoList.add(remoteDto);
@@ -225,7 +225,7 @@ class WebService extends UserChangeListener {
           entryReceivedDto = await restPostNewRowUtils.sendRemoteDtoToServer(
               remoteDto, C_VERSION) as EntryReceivedDto;
           print("PostNewRow: $remoteDto|| Received: $entryReceivedDto");
-          if (remoteDto.hcDto.operation == OperationType.INSERT) {
+          if (remoteDto.trDto.operation == OperationType.INSERT) {
             //refreshPageOttoDto.add(entryReceivedDto.getOriginalTableType(), entryReceivedDto.getOriginalId(), entryReceivedDto.getNewId());
           }
         } on TransmitStatusException catch (e1) {

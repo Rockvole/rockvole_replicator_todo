@@ -45,6 +45,6 @@ class Application {
     YamlMap yaml = loadYaml(yamlString);
     smd = SchemaMetaData.yaml(yaml);
     smd = SchemaMetaDataTools.createSchemaMetaData(smd);
-    smdSys = TransactionTools.createHcSchemaMetaData(smd);
+    smdSys = TransactionTools.createTrSchemaMetaData(smd);
   }
 }

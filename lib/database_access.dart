@@ -34,11 +34,11 @@ class DataBaseAccess {
     return taskNames;
   }
 
-  Future<List<TaskHcDto>> fetchTaskHcList(DbTransaction transaction) async {
-    List<TaskHcDto> taskHcDtoList = [];
-    TaskHcDao taskHcDao;
-    TaskHcDto taskHcDto;
-    taskHcDao = TaskHcDao(_application.smdSys, transaction);
+  Future<List<TaskTrDto>> fetchTaskTrList(DbTransaction transaction) async {
+    List<TaskTrDto> taskHcDtoList = [];
+    TaskTrDao taskHcDao;
+    TaskTrDto taskHcDto;
+    taskHcDao = TaskTrDao(_application.smdSys, transaction);
     await taskHcDao.init(initTable: false);
 
     WaterLineDao waterLineDao =
@@ -54,7 +54,7 @@ class DataBaseAccess {
     Iterator<WaterLineDto> iter = waterLineDtoList.iterator;
     while (iter.moveNext()) {
       WaterLineDto waterLineDto = iter.current;
-      taskHcDto = await taskHcDao.getTaskHcDtoByTs(waterLineDto.water_ts!);
+      taskHcDto = await taskHcDao.getTaskTrDtoByTs(waterLineDto.water_ts!);
       taskHcDtoList.add(taskHcDto);
     }
     return taskHcDtoList;
@@ -160,12 +160,12 @@ class DataBaseAccess {
         WardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
     await abstractWarden.init(TaskMixin.C_TABLE_ID, _application.smd,
         _application.smdSys, transaction);
-    HcDto hcDto = HcDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
+    TrDto hcDto = TrDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
         null, TaskMixin.C_TABLE_ID);
-    TaskHcDto taskHcDto =
-        TaskHcDto.sep(null, task_description, task_complete, hcDto);
+    TaskTrDto taskHcDto =
+        TaskTrDto.sep(null, task_description, task_complete, hcDto);
     AbstractTableTransactions tableTransactions =
-        TableTransactions.sep(taskHcDto, TaskMixin.C_TABLE_ID);
+        TableTransactions.sep(taskHcDto);
     await tableTransactions.init(_localWardenType, _remoteWardenType,
         _application.smd, _application.smdSys, transaction);
     abstractWarden.initialize(tableTransactions);

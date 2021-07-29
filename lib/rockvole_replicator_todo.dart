@@ -1,7 +1,7 @@
 library rockvole_replicator_todo;
 
 export 'dao/TaskDao.dart';
-export 'dao/TaskHcDao.dart';
+export 'dao/TaskTrDao.dart';
 export 'dao/TaskMixin.dart';
 
 export 'admin_page.dart';
