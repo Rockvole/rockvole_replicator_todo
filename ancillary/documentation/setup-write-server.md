@@ -1,6 +1,6 @@
 ## Set-Up Write Server
 
-#### Add the server details to the database
+### Add the server details to the database
 ```shell
 ./rockvole_helper.sh addserver write@rockvole.com WRITE
 ```
