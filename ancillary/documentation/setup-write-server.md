@@ -58,4 +58,4 @@ select * from configuration;
 20 rows in set (0.000 sec)
 ```
 
-* Note: The USER-ID is 1 by default, so we do not need to do <code>./rockvole_helper.sh setserverid 1</code>*
+<i>Note: The USER-ID is 1 by default, so we do not need to do <code>./rockvole_helper.sh setserverid 1</code></i>
