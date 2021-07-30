@@ -21,19 +21,33 @@ class DataBaseAccess {
     // Initialise Configuration table
     ConfigurationDto configurationDto;
     ConfigurationDao configurationDao =
-    ConfigurationDao(_application.smd, transaction, defaults);
+        ConfigurationDao(_application.smd, transaction, defaults);
     await configurationDao.init(initTable: false);
-    await configurationDao.insertDefaultValues();
-    try {
-      configurationDto = await configurationDao.getConfigurationDtoByUnique(
-          0, WardenType.USER, ConfigurationNameEnum.WEB_URL, 0);
-    } on SqlException catch (e) {
-      if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND) {
-        configurationDto = ConfigurationDto.sep(null, 0, WardenType.USER,
-            ConfigurationNameEnum.WEB_URL, 0, null, '10.0.2.2', defaults);
-        await configurationDao.insertDto(configurationDto);
-      }
+    bool updatedConfigTable = await configurationDao.insertDefaultValues();
+    if (updatedConfigTable) {
+      configurationDto = ConfigurationDto.sep(
+          null,
+          0,
+          WardenType.USER,
+          ConfigurationNameEnum.READ_SERVER_URL,
+          0,
+          UrlTools.C_SERVER_PORT,
+          UrlTools.C_ANDROID_ADDRESS,
+          defaults);
+      await configurationDao.setConfigurationDto(configurationDto);
+
+      configurationDto = ConfigurationDto.sep(
+          null,
+          0,
+          WardenType.USER,
+          ConfigurationNameEnum.WRITE_SERVER_URL,
+          0,
+          UrlTools.C_SERVER_PORT,
+          UrlTools.C_ANDROID_ADDRESS,
+          defaults);
+      await configurationDao.setConfigurationDto(configurationDto);
     }
+
     List<String> taskNames = await fetchTaskList(transaction);
     await db.close();
     return taskNames;
@@ -55,7 +69,7 @@ class DataBaseAccess {
     await userStoreDao.init();
 
     UserStoreDto userStoreDto =
-    UserStoreDto.sep(cuId, email, 0, 'User', 'User', 0, 0, 0);
+        UserStoreDto.sep(cuId, email, 0, 'User', 'User', 0, 0, 0);
     await userStoreDao.insertDto(userStoreDto);
 
     await _application.userTools
@@ -70,15 +84,15 @@ class DataBaseAccess {
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
     AbstractWarden abstractWarden =
-    WardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
+        WardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
     await abstractWarden.init(TaskMixin.C_TABLE_ID, _application.smd,
         _application.smdSys, transaction);
     TrDto trDto = TrDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
         null, TaskMixin.C_TABLE_ID);
     TaskTrDto taskTrDto =
-    TaskTrDto.sep(null, task_description, task_complete, trDto);
+        TaskTrDto.sep(null, task_description, task_complete, trDto);
     AbstractTableTransactions tableTransactions =
-    TableTransactions.sep(taskTrDto);
+        TableTransactions.sep(taskTrDto);
     await tableTransactions.init(_localWardenType, _remoteWardenType,
         _application.smd, _application.smdSys, transaction);
     abstractWarden.initialize(tableTransactions);
@@ -107,7 +121,7 @@ class DataBaseAccess {
 
   Future<UserStoreDto?> getCurrentUserStoreDto() async {
     UserStoreDto? currentUserStoreDto =
-    UserStoreDto.sep(null, null, null, null, null, null, null, null);
+        UserStoreDto.sep(null, null, null, null, null, null, null, null);
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     try {
@@ -135,7 +149,7 @@ class DataBaseAccess {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     bool isAdmin =
-    await _application.userTools.isAdmin(_application.smd, transaction);
+        await _application.userTools.isAdmin(_application.smd, transaction);
     await db.close();
     return isAdmin;
   }
