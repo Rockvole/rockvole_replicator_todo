@@ -1,16 +1,12 @@
-# rockvole_replicator_todo
+## Database Replication Library Demo Application.
 
-A new Flutter project.
 
-## Getting Started
+The purpose of this app is to show the basics of how you may use the *rockvole_db_replicator* library.
 
-This project is a starting point for a Flutter application.
+I will divide the explanation per device below. You can follow the flow on each device - and follow the links to switch between devices where relevant.
 
-A few resources to get you started if this is your first Flutter project:
+## Examples
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+[Set-Up Write Server](./ancillary/documentation/setup-write-server.md)
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Add item to phone
