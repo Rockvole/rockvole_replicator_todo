@@ -4,7 +4,8 @@
 ```shell
 ./rockvole_helper.sh addserver write@rockvole.com WRITE
 ```
-<div align="center">Command Line</div><br/>
+<div align="center">Command Line</div>
+<hr/>
 
 ```roomsql
 select * from user;
@@ -16,7 +17,8 @@ select * from user;
 1 row in set (0.000 sec)
 
 ```
-<div align="center">MySql</div><br/>
+<div align="center">MySql</div>
+<hr/>
 
 ```roomsql
 select * from user_store;
@@ -27,7 +29,8 @@ select * from user_store;
 +----+--------------------+--------------+------+---------+--------------------+------------------------+----------------------+
 1 row in set (0.000 sec)
 ```
-<div align="center">MySql</div><br/>
+<div align="center">MySql</div>
+<hr/>
 
 ```roomsql
 select * from configuration;

@@ -3,7 +3,6 @@
 ### Add email address in app and press refresh
 
 <img src="images/user1_add_email.png" width="200" />
-
 <hr/>
 
 ### Now view the changes on the server :
@@ -18,7 +17,8 @@ select * from user;
 +----+----------------------+--------+--------+---------------------+---------------+
 2 rows in set (0.000 sec)
 ```
-<div align="center">MySql: User Table</div><br/>
+<div align="center">MySql: User Table</div>
+<hr/>
 
 ```roomsql
 select * from user_TR;
@@ -30,7 +30,8 @@ select * from user_TR;
 +----+----------------------+--------+--------+---------------------+---------------+----+-----------+---------+---------+--------------------+------+
 2 rows in set (0.000 sec)
 ```
-<div align="center">MySql: User Transaction Table</div><br/>
+<div align="center">MySql: User Transaction Table</div>
+<hr/>
 
 ```roomsql
 select * from user_store;
@@ -42,7 +43,8 @@ select * from user_store;
 +----+--------------------+--------------+------+---------+--------------------+------------------------+----------------------+
 2 rows in set (0.000 sec)
 ```
-<div align="center">MySql: User Store Table</div><br/>
+<div align="center">MySql: User Store Table</div>
+<hr/>
 
 ```roomsql
 select * from user_store_TR;
