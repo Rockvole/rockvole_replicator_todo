@@ -9,4 +9,8 @@ I will divide the explanation per device below. You can follow the flow on each 
 
 [Set-Up Write Server](./ancillary/documentation/setup-write-server.md)
 
-Add item to phone
+[Create User](./ancillary/documentation/create-user.md)
+
+[Add items to phone](./ancillary/documentation/add-item-phone.md)
+
+[Create Admin Phone](./ancillary/documentation/create-admin-phone.md)
