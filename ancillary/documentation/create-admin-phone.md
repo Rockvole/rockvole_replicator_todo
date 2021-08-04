@@ -45,3 +45,25 @@ select * from user_store;
 3 rows in set (0.000 sec)
 ```
 <div align="center">Mysql: User Store Table</div>
+<hr/>
+
+### Press refresh and Admin user is now Admin
+
+<img src="images/admin_now_admin.png" width="200" />
+<hr/>
+
+### User table now contains admin password
+
+```roomsql
+select * from user;
++----+----------------------+--------+--------+---------------------+---------------+
+| id | pass_key             | subset | warden | request_offset_secs | registered_ts |
++----+----------------------+--------+--------+---------------------+---------------+
+|  1 | 41004347aa0310209084 |      1 |      1 |                   0 |             0 |
+|  2 | 40259a               |      0 |      7 |                9453 |     277683963 |
+|  3 | 83902a1387aa56aaa7a1 |      0 |      5 |               21501 |     278026768 |
++----+----------------------+--------+--------+---------------------+---------------+
+3 rows in set (0.001 sec)
+```
+<div align="center">Mysql: User Table</div>
+
