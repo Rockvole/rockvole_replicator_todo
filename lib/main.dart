@@ -106,6 +106,9 @@ class _MyHomePageState extends State<MyHomePage>
   Widget build(BuildContext context) {
     RestIntentService intent = RestIntentService(_application);
     String _autoCompleteSelection;
+    Column noItemsMessage = Column(
+      children: [Text(""),Text(""),Text("No Items Found", style: TextStyle(color: Colors.grey),)],
+    );
     RawAutocomplete rawAutocomplete = RawAutocomplete(
         textEditingController: _textEditingController,
         focusNode: _focusNode,
@@ -291,6 +294,7 @@ class _MyHomePageState extends State<MyHomePage>
                       },
                       child: Text('Add')))
             ]),
+            _taskNames.length==0?noItemsMessage:Text(""),
             Spacer(),
             Visibility(
                 visible: _isAdmin,

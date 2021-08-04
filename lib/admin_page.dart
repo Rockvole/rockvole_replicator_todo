@@ -75,7 +75,7 @@ class _AdminPageState extends State<AdminPage> {
                           ]);
                         });
                   } else {
-                    return Text("No items for Approval / Rejections found",
+                    return Text("No items for Approval / Rejection found",
                         style: TextStyle(fontSize: 18));
                   }
                 })));
