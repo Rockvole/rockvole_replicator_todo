@@ -5,7 +5,7 @@ The purpose of this app is to show the basics of how you may use the *rockvole_d
 
 I will divide the explanation per device below. You can follow the flow on each device - and follow the links to switch between devices where relevant.
 
-## Examples
+## Phone Example
 
 [Set-Up Write Server](./ancillary/documentation/setup-write-server.md)
 
@@ -20,3 +20,9 @@ I will divide the explanation per device below. You can follow the flow on each 
 [Admin Approve / Reject](./ancillary/documentation/admin-approve-reject.md)
 
 [Show Item on User 2](./ancillary/documentation/show-item-user-2.md)
+
+<hr/>
+
+## Read Server Example
+
+[Set-Up Read Server](./ancillary/documentation/READ-set-up.md)

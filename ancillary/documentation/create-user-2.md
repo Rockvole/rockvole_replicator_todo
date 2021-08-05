@@ -9,4 +9,6 @@
 ```roomsql
 select * from task;
 ```
-<div align="center">No rows returned</div>
+<div align="center">Sqllite : No rows returned</div>
+
+<i>You can see that the items not yet approved have not been sent to the User 2 phone.</i>
