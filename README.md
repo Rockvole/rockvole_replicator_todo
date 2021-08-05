@@ -16,3 +16,7 @@ I will divide the explanation per device below. You can follow the flow on each 
 [Create Admin Phone](./ancillary/documentation/create-admin-phone.md)
 
 [Create User 2](./ancillary/documentation/create-user-2.md)
+
+[Admin Approve / Reject](./ancillary/documentation/admin-approve-reject.md)
+
+[Show Item on User 2](./ancillary/documentation/show-item-user-2.md)
