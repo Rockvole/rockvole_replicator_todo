@@ -115,3 +115,18 @@ select * from configuration;
 ```
 <div align="center">MySql: configuration USER-ID is set to 5</div>
 <hr/>
+
+```roomsql
+show tables;
++----------------------+
+| Tables_in_default_db |
++----------------------+
+| configuration        |
+| user                 |
+| user_TR              |
+| user_store           |
+| user_store_TR        |
+| water_line           |
++----------------------+
+6 rows in set (0.00 sec)
+```
