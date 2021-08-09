@@ -85,8 +85,8 @@ class DataBaseAccess {
 
     AbstractWarden abstractWarden =
         WardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
-    await abstractWarden.init(TaskMixin.C_TABLE_ID, _application.smd,
-        _application.smdSys, transaction);
+    await abstractWarden.init(
+        _application.smd, _application.smdSys, transaction);
     TrDto trDto = TrDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
         null, TaskMixin.C_TABLE_ID);
     TaskTrDto taskTrDto =
