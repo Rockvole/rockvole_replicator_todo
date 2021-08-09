@@ -15,11 +15,11 @@ select * from user;
 +----+----------------------+--------+--------+---------------------+---------------+
 | id | pass_key             | subset | warden | request_offset_secs | registered_ts |
 +----+----------------------+--------+--------+---------------------+---------------+
-|  1 | 41004347aa0310209084 |      1 |      1 |                   0 |             0 |
-|  2 | 40259a               |      0 |      7 |                9453 |     277683963 |
-|  3 | 83902a1387aa56aaa7a1 |      0 |      5 |               21501 |     278026768 |
-|  4 | 7a22a1               |      0 |      7 |               40588 |     278110705 |
-|  5 | a3aa01220a7aa0060040 |      1 |      3 |                   0 |             0 |
+|  1 | 72a2a0a6123a29aaa815 |      1 |      1 |                   0 |             0 |
+|  2 | a2a1a1               |      0 |      7 |               14996 |     278528223 |
+|  3 | 02aaa7aa2a916a117a2a |      0 |      5 |               66428 |     278539401 |
+|  4 | 1a03a0               |      0 |      7 |               78208 |     278540031 |
+|  5 | a2aa0aaa10020a7a0229 |      1 |      3 |                   0 |             0 |
 +----+----------------------+--------+--------+---------------------+---------------+
 5 rows in set (0.000 sec)
 ```
@@ -32,9 +32,9 @@ select * from user_store;
 | id | email              | last_seen_ts | name | surname | records_downloaded | changes_approved_count | changes_denied_count |
 +----+--------------------+--------------+------+---------+--------------------+------------------------+----------------------+
 |  1 | write@rockvole.com |            0 | NULL | NULL    |                  0 |                      0 |                    0 |
-|  2 | user1@rockvole.com |    277683963 | NULL | NULL    |                  0 |                      0 |                    0 |
-|  3 | admin@rockvole.com |    278195307 | NULL | NULL    |                  0 |                      0 |                    0 |
-|  4 | user2@rockvole.com |    278196390 | NULL | NULL    |                  0 |                      0 |                    0 |
+|  2 | user1@rockvole.com |    278528223 | NULL | NULL    |                  0 |                      0 |                    0 |
+|  3 | admin@rockvole.com |    278540265 | NULL | NULL    |                  0 |                      0 |                    0 |
+|  4 | user2@rockvole.com |    278541368 | NULL | NULL    |                  0 |                      0 |                    0 |
 |  5 | read@rockvole.com  |            0 | NULL | NULL    |                  0 |                      0 |                    0 |
 +----+--------------------+--------------+------+---------+--------------------+------------------------+----------------------+
 5 rows in set (0.000 sec)
@@ -45,7 +45,7 @@ select * from user_store;
 ### Copy the read server details to the read server
 
 ```shell
-./rockvole_helper.sh setuser 5 read@rockvole.com a3aa01220a7aa0060040 READ
+./rockvole_helper.sh setuser 5 read@rockvole.com a2aa0aaa10020a7a0229 READ
 ```
 <div align="center">CMD: copy read server credentials over</div>
 <hr/>
@@ -57,7 +57,7 @@ select * from user;
 +----+----------------------+--------+--------+---------------------+---------------+
 | id | pass_key             | subset | warden | request_offset_secs | registered_ts |
 +----+----------------------+--------+--------+---------------------+---------------+
-|  5 | a3aa01220a7aa0060040 |      0 |      3 |                   0 |             0 |
+|  5 | a2aa0aaa10020a7a0229 |      0 |      3 |                   0 |             0 |
 +----+----------------------+--------+--------+---------------------+---------------+
 1 row in set (0.00 sec)
 ```
@@ -71,7 +71,7 @@ select * from user_store;
 +----+-------------------+--------------+------+---------+--------------------+------------------------+----------------------+
 |  5 | read@rockvole.com |            0 | NULL | NULL    |                  0 |                      0 |                    0 |
 +----+-------------------+--------------+------+---------+--------------------+------------------------+----------------------+
-1 row in set (0.00 sec)
+1 row in set (0.01 sec)
 ```
 <div align="center">MySql: User Store Table</div>
 <hr/>
