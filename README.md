@@ -33,4 +33,4 @@ I will divide the explanation per device below. You can follow the flow on each 
 
 [Set-Up Write Server](./ancillary/documentation/WRITE-set-up.md)
 
-[Replicate Write Server]
+[Replicate Write Server](./ancillary/documentation/WRITE-replicate.md)
