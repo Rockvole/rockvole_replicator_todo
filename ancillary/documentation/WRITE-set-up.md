@@ -15,12 +15,12 @@ select * from user;
 +----+----------------------+--------+--------+---------------------+---------------+
 | id | pass_key             | subset | warden | request_offset_secs | registered_ts |
 +----+----------------------+--------+--------+---------------------+---------------+
-|  1 | 72a2a0a6123a29aaa815 |      1 |      1 |                   0 |             0 |
-|  2 | a2a1a1               |      0 |      7 |               14996 |     278528223 |
-|  3 | 02aaa7aa2a916a117a2a |      0 |      5 |               66428 |     278539401 |
-|  4 | 1a03a0               |      0 |      7 |               78208 |     278540031 |
-|  5 | a2aa0aaa10020a7a0229 |      1 |      3 |                   0 |             0 |
-|  6 | a0a01a56aaaaa6584a00 |      2 |      1 |                   0 |             0 |
+|  1 | 9101025213a41aaa2a21 |      1 |      1 |                   0 |             0 |
+|  2 | 1a09a1               |      0 |      7 |                2278 |     278628118 |
+|  3 | 91aa95a12a4751a071aa |      0 |      5 |               57901 |     278629198 |
+|  4 | 1aa261               |      0 |      7 |               18003 |     278631240 |
+|  5 | aa11aaaaa1aa2a01a4a1 |      1 |      3 |                   0 |             0 |
+|  6 | 104aaa10941a90a11a15 |      2 |      1 |                   0 |             0 |
 +----+----------------------+--------+--------+---------------------+---------------+
 6 rows in set (0.000 sec)
 ```
@@ -33,10 +33,10 @@ select * from user_store;
 | id | email               | last_seen_ts | name | surname | records_downloaded | changes_approved_count | changes_denied_count |
 +----+---------------------+--------------+------+---------+--------------------+------------------------+----------------------+
 |  1 | write@rockvole.com  |            0 | NULL | NULL    |                  0 |                      0 |                    0 |
-|  2 | user1@rockvole.com  |    278528223 | NULL | NULL    |                  0 |                      0 |                    0 |
-|  3 | admin@rockvole.com  |    278540265 | NULL | NULL    |                  0 |                      0 |                    0 |
-|  4 | user2@rockvole.com  |    278541368 | NULL | NULL    |                  0 |                      0 |                    0 |
-|  5 | read@rockvole.com   |    278545149 | NULL | NULL    |                  0 |                      0 |                    0 |
+|  2 | user1@rockvole.com  |    278628118 | NULL | NULL    |                  0 |                      0 |                    0 |
+|  3 | admin@rockvole.com  |    278629675 | NULL | NULL    |                  0 |                      0 |                    0 |
+|  4 | user2@rockvole.com  |    278631250 | NULL | NULL    |                  0 |                      0 |                    0 |
+|  5 | read@rockvole.com   |    278634624 | NULL | NULL    |                  0 |                      0 |                    0 |
 |  6 | write2@rockvole.com |            0 | NULL | NULL    |                  0 |                      0 |                    0 |
 +----+---------------------+--------------+------+---------+--------------------+------------------------+----------------------+
 6 rows in set (0.000 sec)
@@ -45,7 +45,7 @@ select * from user_store;
 ### Copy the new write server details to the secondary write server
 
 ```shell
-./rockvole_helper.sh setuser 6 write2@rockvole.com a0a01a56aaaaa6584a00 WRITE
+./rockvole_helper.sh setuser 6 write2@rockvole.com 104aaa10941a90a11a15 WRITE
 ```
 <div align="center">CMD: copy secondary write server credentials over</div>
 <hr/>
@@ -57,7 +57,7 @@ select * from user;
 +----+----------------------+--------+--------+---------------------+---------------+
 | id | pass_key             | subset | warden | request_offset_secs | registered_ts |
 +----+----------------------+--------+--------+---------------------+---------------+
-|  6 | a0a01a56aaaaa6584a00 |      0 |      1 |                   0 |             0 |
+|  6 | 104aaa10941a90a11a15 |      0 |      1 |                   0 |             0 |
 +----+----------------------+--------+--------+---------------------+---------------+
 1 row in set (0.00 sec)
 ```
