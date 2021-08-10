@@ -28,3 +28,9 @@ I will divide the explanation per device below. You can follow the flow on each 
 [Set-Up Read Server](./ancillary/documentation/READ-set-up.md)
 
 [Replicate Read Server](./ancillary/documentation/READ-replicate.md)
+
+## Write Server Example
+
+[Set-Up Write Server](./ancillary/documentation/WRITE-set-up.md)
+
+[Replicate Write Server]
