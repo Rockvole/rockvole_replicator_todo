@@ -23,17 +23,16 @@ class WebService extends UserChangeListener {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
     if (await _application.userTools.isAdmin(_application.smd, transaction)) {
-      _localWardenType=WardenType.ADMIN;
-      _remoteWardenType=WardenType.WRITE_SERVER;
+      _localWardenType = WardenType.ADMIN;
+      _remoteWardenType = WardenType.WRITE_SERVER;
     } else {
-      _localWardenType=WardenType.USER;
-      _remoteWardenType=WardenType.READ_SERVER;
+      _localWardenType = WardenType.USER;
+      _remoteWardenType = WardenType.READ_SERVER;
     }
     await db.close();
   }
 
-  Future<AuthenticationDto?> authenticateUser(
-      WaterState stateType, bool userInitiated) async {
+  Future<AuthenticationDto?> authenticateUser(bool userInitiated) async {
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
@@ -51,8 +50,8 @@ class WebService extends UserChangeListener {
     await authenticationUtils.init();
     try {
       currentTs = TimeUtils.getNowCustomTs();
-      remoteDto = await authenticationUtils.requestAuthenticationFromServer(
-          stateType, C_VERSION);
+      remoteDto =
+          await authenticationUtils.requestAuthenticationFromServer(C_VERSION);
       print(remoteDto.toString());
     } on SqlException catch (e) {
       if (e.sqlExceptionEnum == SqlExceptionEnum.ENTRY_NOT_FOUND ||
@@ -78,8 +77,7 @@ class WebService extends UserChangeListener {
     return authenticationDto;
   }
 
-  Future<TransmitStatus?> downloadRows(
-      WaterState waterState, int totalCount) async {
+  Future<TransmitStatus?> downloadRows(int totalCount) async {
     if (totalCount == 0) {
       transmitStatusDto =
           TransmitStatusDto(TransmitStatus.NO_NEW_RECORDS_FOUND);
@@ -113,7 +111,7 @@ class WebService extends UserChangeListener {
         _application.bus.eventBus.fire(transmitStatusDto);
         await Future.delayed(Duration(seconds: C_TOAST_WAIT));
         List<RemoteDto> remoteDtoList =
-            await getRows.requestRemoteDtoListFromServer(waterState);
+            await getRows.requestRemoteDtoListFromServer();
         if (getRows.wasTableReceived(ConfigurationMixin.C_TABLE_ID)) {
           _application.userTools.clearConfigurationCache();
         }
@@ -161,8 +159,7 @@ class WebService extends UserChangeListener {
         _application.smd,
         transaction,
         ConfigurationNameEnum.SEND_CHANGES_DELAY_MINS);
-    ClientWarden clientWarden =
-        ClientWarden(_localWardenType, waterLineDao);
+    ClientWarden clientWarden = ClientWarden(_localWardenType, waterLineDao);
     List<WaterLineDto> waterLineList;
     try {
       waterLineList = await clientWarden.getWaterLineListToSend();

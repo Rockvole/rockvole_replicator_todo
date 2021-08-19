@@ -80,6 +80,7 @@ class DataBaseAccess {
 
   Future<List<String>> addTask(String task_description, bool task_complete,
       List<String> taskNames) async {
+    UserDto? userDto = await _application.dbAccess.getCurrentUserDto();
     AbstractDatabase db = await DataBaseAccess.getConnection();
     DbTransaction transaction = await DataBaseAccess.getTransaction();
 
@@ -87,7 +88,7 @@ class DataBaseAccess {
         WardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
     await abstractWarden.init(
         _application.smd, _application.smdSys, transaction);
-    TrDto trDto = TrDto.sep(null, OperationType.INSERT, 99, null, 'Insert Task',
+    TrDto trDto = TrDto.sep(null, OperationType.INSERT, userDto?.id, null, 'Insert Task',
         null, TaskMixin.C_TABLE_ID);
     TaskTrDto taskTrDto =
         TaskTrDto.sep(null, task_description, task_complete, trDto);

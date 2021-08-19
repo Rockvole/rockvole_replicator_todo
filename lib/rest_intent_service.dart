@@ -12,7 +12,8 @@ class RestIntentService {
 
   RestIntentService(this._application);
 
-  Future<Set<int>> syncDatabaseFull(UserDto _currentUserDto, UserStoreDto _currentUserStoreDto) async {
+  Future<Set<int>> syncDatabaseFull(
+      UserDto _currentUserDto, UserStoreDto _currentUserStoreDto) async {
     print('start long op');
     _webService = WebService(_application);
     await _webService.init();
@@ -23,17 +24,10 @@ class RestIntentService {
         await _webService.sendChanges(null, true);
       }
       AuthenticationDto? authenticationDto =
-      await _webService.authenticateUser(WaterState.SERVER_APPROVED, true);
+          await _webService.authenticateUser(true);
       if (authenticationDto != null) {
-        TransmitStatus? transmitStatus = await _webService.downloadRows(
-            WaterState.SERVER_APPROVED, authenticationDto.newRecords!);
-      }
-      if (_currentUserDto.warden == WardenType.ADMIN) {
-        authenticationDto =
-        await _webService.authenticateUser(WaterState.SERVER_PENDING, true);
-        if (authenticationDto != null)
-          await _webService.downloadRows(
-              WaterState.SERVER_PENDING, authenticationDto.newRecords!);
+        TransmitStatus? transmitStatus =
+            await _webService.downloadRows(authenticationDto.newRecords!);
       }
     } on TransmitStatusException catch (e) {
       print(e.cause);
@@ -65,5 +59,4 @@ class RestIntentService {
     print('stop long op');
     return Future.value(_webService.tableTypeSet);
   }
-
 }
