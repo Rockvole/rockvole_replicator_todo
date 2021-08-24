@@ -37,47 +37,56 @@ class _AdminPageState extends State<AdminPage> {
           title: Text('Approvals'),
           backgroundColor: Colors.blue,
         ),
-        body: Padding(
-            padding: EdgeInsets.all(8),
-            child: FutureBuilder<List<TaskTrDto>?>(
-                future: fetchTasks(),
-                initialData: [],
-                builder: (BuildContext context,
-                    AsyncSnapshot<List<TaskTrDto>?> snapshot) {
-                  if (snapshot.hasData) {
-                    return ListView.builder(
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context, position) {
-                          return Row(children: [
-                            Text(snapshot.data![position].task_description!),
-                            Spacer(),
-                            IconButton(
-                                onPressed: () async {
-                                  WaterLineDto? waterLineDto =
-                                      await _application.dbAccess
-                                          .setWaterLineState(
-                                              snapshot.data![position].ts!,
-                                              WaterState.CLIENT_REJECTED);
-                                  await _application.dbAccess
-                                      .cleanRows(waterLineDto);
-                                  setState(() { });
-                                },
-                                icon: Icon(Icons.cancel, color: Colors.red)),
-                            IconButton(
-                                onPressed: () async {
-                                  await _application.dbAccess.setWaterLineState(
-                                      snapshot.data![position].ts!,
-                                      WaterState.CLIENT_APPROVED);
-                                  setState(() { });
-                                },
-                                icon: Icon(Icons.check_circle,
-                                    color: Colors.green))
-                          ]);
-                        });
-                  } else {
-                    return Text("No items for Approval / Rejection found",
-                        style: TextStyle(fontSize: 18));
-                  }
-                })));
+        body: Column(children: [
+          Padding(
+              padding: EdgeInsets.all(8),
+              child: OutlinedButton(
+                  onPressed: () async {
+                    await _application.dbAccess.dropWaterLine();
+                  }, child: Text("Clear Water Line"))),
+          Padding(
+              padding: EdgeInsets.all(8),
+              child: FutureBuilder<List<TaskTrDto>?>(
+                  future: fetchTasks(),
+                  initialData: [],
+                  builder: (BuildContext context,
+                      AsyncSnapshot<List<TaskTrDto>?> snapshot) {
+                    if (snapshot.hasData) {
+                      return ListView.builder(
+                          itemCount: snapshot.data!.length,
+                          itemBuilder: (context, position) {
+                            return Row(children: [
+                              Text(snapshot.data![position].task_description!),
+                              Spacer(),
+                              IconButton(
+                                  onPressed: () async {
+                                    WaterLineDto? waterLineDto =
+                                        await _application.dbAccess
+                                            .setWaterLineState(
+                                                snapshot.data![position].ts!,
+                                                WaterState.CLIENT_REJECTED);
+                                    await _application.dbAccess
+                                        .cleanRows(waterLineDto);
+                                    setState(() {});
+                                  },
+                                  icon: Icon(Icons.cancel, color: Colors.red)),
+                              IconButton(
+                                  onPressed: () async {
+                                    await _application.dbAccess
+                                        .setWaterLineState(
+                                            snapshot.data![position].ts!,
+                                            WaterState.CLIENT_APPROVED);
+                                    setState(() {});
+                                  },
+                                  icon: Icon(Icons.check_circle,
+                                      color: Colors.green))
+                            ]);
+                          });
+                    } else {
+                      return Text("No items for Approval / Rejection found",
+                          style: TextStyle(fontSize: 18));
+                    }
+                  }))
+        ]));
   }
 }

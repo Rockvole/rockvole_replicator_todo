@@ -88,8 +88,8 @@ class DataBaseAccess {
         WardenFactory.getAbstractWarden(_localWardenType, _remoteWardenType);
     await abstractWarden.init(
         _application.smd, _application.smdSys, transaction);
-    TrDto trDto = TrDto.sep(null, OperationType.INSERT, userDto?.id, null, 'Insert Task',
-        null, TaskMixin.C_TABLE_ID);
+    TrDto trDto = TrDto.sep(null, OperationType.INSERT, userDto?.id, null,
+        'Insert Task', null, TaskMixin.C_TABLE_ID);
     TaskTrDto taskTrDto =
         TaskTrDto.sep(null, task_description, task_complete, trDto);
     AbstractTableTransactions tableTransactions =
@@ -237,6 +237,19 @@ class DataBaseAccess {
           CleanTables(_application.smd, _application.smdSys, transaction);
       await cleanTables.init();
       await cleanTables.deleteRow(waterLineDto!, true, false, false);
+    } finally {
+      await db.close();
+    }
+  }
+
+  Future<void> dropWaterLine() async {
+    AbstractDatabase db = await DataBaseAccess.getConnection();
+    DbTransaction transaction = await DataBaseAccess.getTransaction();
+    try {
+      WaterLineDao waterLineDao =
+          WaterLineDao.sep(_application.smdSys, transaction);
+      await waterLineDao.init();
+      await waterLineDao.dropTable();
     } finally {
       await db.close();
     }
