@@ -39,13 +39,7 @@ class _AdminPageState extends State<AdminPage> {
         ),
         body: Column(children: [
           Padding(
-              padding: EdgeInsets.all(8),
-              child: OutlinedButton(
-                  onPressed: () async {
-                    await _application.dbAccess.dropWaterLine();
-                  }, child: Text("Clear Water Line"))),
-          Padding(
-              padding: EdgeInsets.all(8),
+              padding: EdgeInsets.all(10.0),
               child: FutureBuilder<List<TaskTrDto>?>(
                   future: fetchTasks(),
                   initialData: [],
@@ -53,6 +47,8 @@ class _AdminPageState extends State<AdminPage> {
                       AsyncSnapshot<List<TaskTrDto>?> snapshot) {
                     if (snapshot.hasData) {
                       return ListView.builder(
+                          scrollDirection: Axis.vertical,
+                          shrinkWrap: true,
                           itemCount: snapshot.data!.length,
                           itemBuilder: (context, position) {
                             return Row(children: [
@@ -86,7 +82,19 @@ class _AdminPageState extends State<AdminPage> {
                       return Text("No items for Approval / Rejection found",
                           style: TextStyle(fontSize: 18));
                     }
-                  }))
+                  })),
+          Spacer(),
+          Row(children: [
+            Expanded(
+              child: Padding(
+                  padding: EdgeInsets.all(10.0),
+                  child: OutlinedButton(
+                      onPressed: () async {
+                        await _application.dbAccess.dropWaterLine();
+                      },
+                      child: Text("Clear Water Line"))),
+            )
+          ])
         ]));
   }
 }
