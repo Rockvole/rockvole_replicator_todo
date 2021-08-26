@@ -8,7 +8,8 @@
 
 ```roomsql
 select * from task;
-1|A. Mow Lawn|0
+id |task_description |task_complete
+1  |A. Mow Lawn      |0
 ```
 <div align="center">Sqllite : Task Table</div>
 

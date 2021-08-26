@@ -12,7 +12,7 @@ select * from user;
 +----+----------------------+--------+--------+---------------------+---------------+
 | id | pass_key             | subset | warden | request_offset_secs | registered_ts |
 +----+----------------------+--------+--------+---------------------+---------------+
-|  1 | 9101025213a41aaa2a21 |      1 |      1 |                   0 |             0 |
+|  1 | 831a117210a2aaa84187 |      1 |      1 |               24789 |     279991557 |
 +----+----------------------+--------+--------+---------------------+---------------+
 1 row in set (0.001 sec)
 ```
@@ -57,7 +57,7 @@ select * from configuration;
 | 1570000 |      0 |      7 | SEND-CHANGES-DELAY-OPTS     |       0 |            0 | NULL         |
 | 1670000 |      0 |      7 | HOME-COUNTRY-ONLY           |       0 |            0 | NULL         |
 +---------+--------+--------+-----------------------------+---------+--------------+--------------+
-20 rows in set (0.000 sec)
+20 rows in set (0.001 sec)
 ```
 
-<i>Note: The USER-ID is 1 by default, so we do not need to do <code>./rockvole_helper.sh setserverid 1</code></i>
+<i>Note: The USER-ID is 1 by default, so in this case we do not need to do <code>./rockvole_helper.sh setserverid 1</code></i>

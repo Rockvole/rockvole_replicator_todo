@@ -3,7 +3,7 @@
 
 The purpose of this app is to show the basics of how you may use the *rockvole_db_replicator* library.
 
-I will divide the explanation per device below. You can follow the flow on each device - and follow the links to switch between devices where relevant.
+I will divide the explanation per device below.
 
 ## User 1 Phone Example
 
