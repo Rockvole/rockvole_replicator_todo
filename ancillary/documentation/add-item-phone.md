@@ -2,7 +2,7 @@
 
 ### Add tasks in app
 
-<img src="images/user1_add_item.png" width="200" />
+<img src="images/user1_add_item.png" width="400" />
 <hr/>
 
 #### The changes in the phone sqlite database :

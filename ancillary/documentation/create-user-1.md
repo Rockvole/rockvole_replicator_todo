@@ -2,7 +2,7 @@
 
 ### Add email address in app and press refresh
 
-<img src="images/user1_add_email.png" width="200" />
+<img src="images/user1_add_email.png" width="400" />
 <hr/>
 
 ### Now view the changes on the server :

@@ -2,7 +2,7 @@
 
 ### Save user and refresh
 
-<img src="images/admin_add_email.png" width="200" />
+<img src="images/admin_add_email.png" width="400" />
 <hr/>
 
 ### On server, we upgrade the user to admin
@@ -49,7 +49,7 @@ select * from user_store;
 
 ### Press refresh on the phone and Admin user is now Admin
 
-<img src="images/admin_now_admin.png" width="200" />
+<img src="images/admin_now_admin.png" width="400" />
 <hr/>
 
 ### User table now contains admin password

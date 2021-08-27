@@ -2,7 +2,7 @@
 
 ### Add email address in app and press refresh
 
-<img src="images/user2_show_new_item.png" width="200" />
+<img src="images/user2_show_new_item.png" width="400" />
 <div align="center"></div>
 <hr/>
 

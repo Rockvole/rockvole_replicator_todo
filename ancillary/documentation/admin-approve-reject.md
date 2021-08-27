@@ -9,7 +9,7 @@
 
 ### Choose whether to Approve or Reject
 
-<img src="images/admin_approvals.png" width="200" />
+<img src="images/admin_approvals.png" width="400" />
 
 <i>We will Approve 'Mow Lawn', Reject 'Trim Hedge' and Ignore 'Water Roses'.</i>
 <hr/>
