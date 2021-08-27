@@ -1,7 +1,10 @@
 ## Database Replication Library Demo Application.
 
+The purpose of this app is to show the basics of how you may use the [rockvole_db_replicator](https://github.com/Rockvole/rockvole_db_replicator) library.
 
-The purpose of this app is to show the basics of how you may use the *rockvole_db_replicator* library.
+## Getting Started
+
+[Getting Started](./ancillary/documentation/getting-started.md)
 
 I will divide the explanation per device below.
 
