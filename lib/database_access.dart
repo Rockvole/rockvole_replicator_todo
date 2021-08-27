@@ -135,7 +135,7 @@ class DataBaseAccess {
 
   static Future<AbstractDatabase> getConnection() async {
     var databasesPath = (await getDatabasesPath()).toString() + "/task_data.db";
-    AbstractDatabase db = SqfliteDatabase.filename(databasesPath);
+    AbstractDatabase db = SqfliteDatabase.filename(databasesPath) as AbstractDatabase;
     await db.connect();
     return db;
   }
