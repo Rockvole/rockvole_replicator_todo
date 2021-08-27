@@ -1,6 +1,6 @@
-import 'package:rockvole_db/rockvole_db.dart';
+import 'package:rockvole_db_replicator/rockvole_db.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:rockvole_db/rockvole_sqflite.dart';
+import 'package:rockvole_db_replicator/rockvole_sqflite.dart';
 
 class SqflitePool extends AbstractPool {
   static final String C_EXT = ".db";

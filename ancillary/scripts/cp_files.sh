@@ -1,8 +1,8 @@
 #! /bin/bash
-src_dao_loc=/work/projects/dart/rockvole_db/test/lib/dao
+src_dao_loc=/work/projects/dart/rockvole_db_replicator/test/lib/dao
 dst_dao_loc=../../lib/dao
 
-src_schema_loc=/work/projects/dart/rockvole_db/ancillary
+src_schema_loc=/work/projects/dart/rockvole_db_replicator/ancillary
 dst_schema_loc=../../ancillary
 
 mkdir -p $dst_dao_loc

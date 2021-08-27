@@ -26,8 +26,8 @@ dependencies:
   sqflite: 2.0.0+3
   yaml: 3.1.0
   event_bus: 2.0.0
-  rockvole_db:
-    path: ../../dart/rockvole_db
+  rockvole_db_replicator:
+    path: ../../dart/rockvole_db_replicator
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

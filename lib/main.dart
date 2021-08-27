@@ -1,8 +1,8 @@
 import 'package:pedantic/pedantic.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/material.dart';
-import 'package:rockvole_db/rockvole_transactions.dart';
-import 'package:rockvole_db/rockvole_web_services.dart';
+import 'package:rockvole_db_replicator/rockvole_transactions.dart';
+import 'package:rockvole_db_replicator/rockvole_web_services.dart';
 import 'package:rockvole_replicator_todo/dao/TaskMixin.dart';
 
 import 'package:rockvole_replicator_todo/rockvole_replicator_todo.dart';

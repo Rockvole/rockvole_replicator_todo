@@ -1,5 +1,5 @@
 import '../pools/SqflitePool.dart';
-import 'package:rockvole_db/rockvole_db.dart';
+import 'package:rockvole_db_replicator/rockvole_db.dart';
 
 class SqfliteHelper {
   // --------------------------------------------------------------------------------------- DATABASE
