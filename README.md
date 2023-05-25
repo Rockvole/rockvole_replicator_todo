@@ -1,4 +1,4 @@
-## Database Replication Library Demo Application.
+## Database Replication Library Demonstration Application.
 
 The purpose of this app is to show the basics of how you may use the [rockvole_db_replicator](https://github.com/Rockvole/rockvole_db_replicator) library.
 
