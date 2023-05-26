@@ -46,3 +46,9 @@ app.*.map.json
 
 # Apple
 /ios/
+
+# Project
+ancillary/todo_schema.yaml
+/lib/dao/
+/test/
+/web/
